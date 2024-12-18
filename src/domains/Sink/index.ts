@@ -1,35 +1,27 @@
-import { error } from "console";
-import NetworkElementBase from "../NetworkElementBase";
+import NetworkElement from "../NetworkElement";
 
-class Sink extends NetworkElementBase {
-    private agentsCameCount: number = 0;
-    private previousElement: NetworkElementBase | null = null;
+class Sink extends NetworkElement {
 
     constructor() {
         super();
-    }
 
-    public take(): void {
-
+        this.nextElement = null;
     }
 
     public trigger(): void {
         if (!this.previousElement) {
             throw new Error;
         }
-        this.take;
+
+        this.take();
     }
 
     public getAgentsCameCount(): number {
         return this.agentsCameCount;
     }
 
-    public getInfo(): string {
-        return `${this.agentsCameCount}`
-    }
-
-    public setPreviousElement(element: NetworkElementBase): void {
-        this.previousElement = element;
+    public getDataInfo() {
+        return { agentsCameCount: this.agentsCameCount }
     }
 }
 

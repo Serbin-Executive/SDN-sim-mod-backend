@@ -1,11 +1,10 @@
-import NetworkElementBase from "../NetworkElementBase";
+import NetworkElement from "../NetworkElement";
 
-class Source extends NetworkElementBase {
-    private agentsLeftCount: number = 0;
-    private nextElement: NetworkElementBase | null = null;
+class Source extends NetworkElement {
 
     constructor() {
         super();
+        this.previousElement = null;
     }
 
     public trigger(): void {
@@ -13,19 +12,15 @@ class Source extends NetworkElementBase {
             console.error("Next element not exist");
             return;
         }
+
+        this.agentsLeftCount++;
         this.nextElement.trigger;
     }
 
-    public getInfo(): string {
-        return `${this.agentsLeftCount}`
-    }
-
-    public getAgentsLeftCount(): number {
-        return this.agentsLeftCount;
-    }
-
-    public setNextElement(element: NetworkElementBase): void {
-        this.nextElement = element;
+    public getDataInfo() {
+        return {
+            agentsLeftCount: this.agentsLeftCount
+        }
     }
 }
 

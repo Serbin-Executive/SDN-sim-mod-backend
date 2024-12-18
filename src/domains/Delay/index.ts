@@ -1,12 +1,16 @@
 import NetworkElement from "../NetworkElement";
+import { IGetDataInfo } from "../meta";
 
 class Delay extends NetworkElement {
-    private delayValue: number | null = null;
+    private delayValue: number;
+
+    constructor() {
+        super()
+
+        this.delayValue = 0;
+    }
 
     public getDelayValue(): number {
-        if (!this.delayValue) {
-            throw new Error;
-        }
         return this.delayValue;
     }
 
@@ -14,20 +18,17 @@ class Delay extends NetworkElement {
         this.delayValue = value;
     }
 
-    public isTakeAvailable(): void {
+    public isTakeAvailable(): void {}
 
-    }
+    public trigger(): void {}
 
-    public take(): void {
-        
-    }
-
-    public trigger(): void {
-        
-    }
-
-    public getInfo(): string {
-        return `${this.getAgentsCount}, ${this.getAgentsCameCount}, ${this.getAgentsLeftCount}, ${this.getDelayValue}`
+    public getDataInfo(): IGetDataInfo {
+        return {
+            agentsCount: this.agentsCount,
+            agentsCameCount: this.agentsCameCount,
+            agentsLeftCount: this.agentsLeftCount,
+            delayValue: this.delayValue,
+        }
     }
 }
 
