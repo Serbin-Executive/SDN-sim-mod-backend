@@ -1,9 +1,9 @@
 import NetworkElement from "../NetworkElement";
-import { IGetDataInfo } from "../meta";
+import { IGetDataInfo, IServiceTimer } from "../meta";
 
 class Delay extends NetworkElement {
     private delayValue: number;
-    private serviceDeviceTimers: number[];
+    private serviceDeviceTimers: IServiceTimer[];
     protected isSourceOrSink: boolean;
 
 
@@ -11,7 +11,7 @@ class Delay extends NetworkElement {
         super()
         this.isSourceOrSink = false;
         this.delayValue = 0;
-        this.serviceDeviceTimers = Array.from({ length: this.capacity }, () => 0);
+        this.serviceDeviceTimers = Array.from({ length: this.capacity }, () => ({time: 0, isBusy: false}));
     }
 
     public getDelayValue(): number {
@@ -28,7 +28,7 @@ class Delay extends NetworkElement {
         }
 
         for (let serviceTimerIndex = 0; serviceTimerIndex < this.serviceDeviceTimers.length; serviceTimerIndex++) {
-            if (this.serviceDeviceTimers[serviceTimerIndex] == this.delayValue) {
+            if (this.serviceDeviceTimers[serviceTimerIndex].time == this.delayValue || !this.serviceDeviceTimers[serviceTimerIndex].isBusy) {
                 return true;
             }
         }
@@ -60,12 +60,23 @@ class Delay extends NetworkElement {
         }
 
         for (let serviceTimerIndex = 0; serviceTimerIndex < this.serviceDeviceTimers.length; serviceTimerIndex++) {
-            if (this.serviceDeviceTimers[serviceTimerIndex] == this.delayValue) {
-                this.serviceDeviceTimers[serviceTimerIndex] == 0;
+            if (this.serviceDeviceTimers[serviceTimerIndex].time == this.delayValue || !this.serviceDeviceTimers[serviceTimerIndex].isBusy) {
+                this.serviceDeviceTimers[serviceTimerIndex].time == 0;
+                this.serviceDeviceTimers[serviceTimerIndex].isBusy == true;
                 this.nextElement.trigger();
                 return;
             }
         }
+    }
+
+    public serviceProcess(): void {
+        setInterval(() => {
+            for (let serviceTimerIndex = 0; serviceTimerIndex < this.serviceDeviceTimers.length; serviceTimerIndex++) {
+                if (this.serviceDeviceTimers[serviceTimerIndex]) {
+                     this.serviceDeviceTimers[serviceTimerIndex].time++;
+                }
+             }
+        }, 1000)
     }
 }
 

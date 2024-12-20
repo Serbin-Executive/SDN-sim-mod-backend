@@ -8,3 +8,8 @@ export interface IGetSchemaInfo {
     previousElement: NetworkElement,
     nextElement: NetworkElement
 }
+
+export interface IServiceTimer {
+    time: number;
+    isBusy: boolean;
+}
