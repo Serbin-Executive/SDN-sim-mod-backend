@@ -1,10 +1,11 @@
 import NetworkElement from "../NetworkElement";
 
 class Sink extends NetworkElement {
+    protected isSourceOrSink: boolean;
 
     constructor() {
         super();
-
+        this.isSourceOrSink = true;
         this.nextElement = null;
     }
 

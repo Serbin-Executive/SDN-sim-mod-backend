@@ -1,9 +1,11 @@
 import NetworkElement from "../NetworkElement";
 
 class Source extends NetworkElement {
+    protected isSourceOrSink: boolean;
 
     constructor() {
         super();
+        this.isSourceOrSink = true;
         this.previousElement = null;
     }
 
@@ -13,7 +15,6 @@ class Source extends NetworkElement {
             return;
         }
 
-        this.agentsLeftCount++;
         this.nextElement.trigger;
     }
 

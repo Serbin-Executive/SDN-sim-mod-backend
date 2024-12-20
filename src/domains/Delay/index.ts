@@ -3,11 +3,15 @@ import { IGetDataInfo } from "../meta";
 
 class Delay extends NetworkElement {
     private delayValue: number;
+    private serviceDeviceTimers: number[];
+    protected isSourceOrSink: boolean;
+
 
     constructor() {
         super()
-
+        this.isSourceOrSink = false;
         this.delayValue = 0;
+        this.serviceDeviceTimers = Array.from({ length: this.capacity }, () => 0);
     }
 
     public getDelayValue(): number {
@@ -18,9 +22,28 @@ class Delay extends NetworkElement {
         this.delayValue = value;
     }
 
-    public isTakeAvailable(): void {}
+    public isTakeAvailable(): boolean {
+        if (!this.nextElement) {
+            throw new Error;
+        }
 
-    public trigger(): void {}
+        for (let serviceTimerIndex = 0; serviceTimerIndex < this.serviceDeviceTimers.length; serviceTimerIndex++) {
+            if (this.serviceDeviceTimers[serviceTimerIndex] == this.delayValue) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public trigger(): void {
+        if (!this.isTakeAvailable) {
+            return;
+        }
+
+        this.give();
+        this.take();
+    }
 
     public getDataInfo(): IGetDataInfo {
         return {
@@ -28,6 +51,20 @@ class Delay extends NetworkElement {
             agentsCameCount: this.agentsCameCount,
             agentsLeftCount: this.agentsLeftCount,
             delayValue: this.delayValue,
+        }
+    }
+
+    private give(): void {
+        if (!this.nextElement) {
+            throw new Error;
+        }
+
+        for (let serviceTimerIndex = 0; serviceTimerIndex < this.serviceDeviceTimers.length; serviceTimerIndex++) {
+            if (this.serviceDeviceTimers[serviceTimerIndex] == this.delayValue) {
+                this.serviceDeviceTimers[serviceTimerIndex] == 0;
+                this.nextElement.trigger();
+                return;
+            }
         }
     }
 }

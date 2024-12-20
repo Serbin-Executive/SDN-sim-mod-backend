@@ -9,6 +9,7 @@ abstract class NetworkElement {
     protected agentsCount: number;
     protected agentsCameCount: number;
     protected agentsLeftCount: number;
+    protected abstract isSourceOrSink: boolean;
 
     constructor() {
         this.id = randomUUID();
@@ -19,16 +20,32 @@ abstract class NetworkElement {
     }
 
     public abstract trigger(): void;
+
     public take(): void {
         if (!this.previousElement) {
             throw new Error;
         }
 
-        const previousElementCurrentAgentsCount: number = 
-            this.previousElement.getAgentsCount();
+        if (this.previousElement.isSourceOrSink) { 
+            this.previousElement.agentsLeftCount++;
+            this.agentsCount++;
+            return;
+        }
 
-        this.previousElement.setAgentsCount(previousElementCurrentAgentsCount + 1)
+        if (!(this.previousElement.agentsCount !== 0)) {
+            return;
+        }
+
+        this.previousElement.agentsCount--;
+        this.previousElement.agentsLeftCount++;
+
+        if (this.isSourceOrSink) {
+            this.agentsCameCount++;
+            return
+        }
+        
         this.agentsCameCount++;
+        this.agentsCount++;
     }
 
     public getSchemaInfo(): IGetSchemaInfo {
@@ -40,6 +57,7 @@ abstract class NetworkElement {
             nextElement: this.nextElement
         }
     }
+
     public abstract getDataInfo(): IGetDataInfo;
 
     public getId(): string {
@@ -76,6 +94,10 @@ abstract class NetworkElement {
         }
         return this.nextElement;
     } 
+
+    public getIsSourceOrSink(): boolean {
+        return this.isSourceOrSink;
+    }
 
     public setCapacity(capacity: number): void {
         this.capacity = capacity;

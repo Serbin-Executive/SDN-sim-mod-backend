@@ -2,20 +2,20 @@ import NetworkElement from "../NetworkElement";
 
 class Queue extends NetworkElement {
 
-    private maxQueueCount: number;
+    protected isSourceOrSink: boolean;
 
     constructor() {
         super();
-
-        this.maxQueueCount = 0;
+        this.isSourceOrSink = false;
     }
 
     public trigger(): void {
 
-    }
+        if (this.capacity > this.agentsCount) {
+            this.take();
+            return;
+        }
 
-    public getMaxQueueCount(): number {
-        return this.maxQueueCount;
     }
 
     public getDataInfo() {
@@ -23,12 +23,18 @@ class Queue extends NetworkElement {
             agentsCount: this.agentsCount,
             agentsCameCount: this.agentsCameCount,
             agentsLeftCount: this.agentsLeftCount,
-            maxQueueCount: this.maxQueueCount
         }
     }
 
-    public setMaxQueueCount(maxQueueCount: number): void {
-        this.maxQueueCount = maxQueueCount;
+    public requestReleaseQueue(): void {
+        
+        if (!this.nextElement) {
+            throw new Error;
+        }
+
+        while (1) {
+            this.nextElement.trigger()
+        }
     }
 }
 
