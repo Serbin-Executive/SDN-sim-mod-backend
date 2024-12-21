@@ -1,5 +1,5 @@
 import NetworkElement from "../NetworkElement";
-import { IGetDataInfo, IServiceTimer } from "../meta";
+import { IGetDataInfo } from "../meta";
 
 class Delay extends NetworkElement {
     private delayValue: number;
@@ -19,7 +19,7 @@ class Delay extends NetworkElement {
         }
 
         this.take();
-        this.serviceProcess()
+        this.agentServiceTimer()
     }
 
     public checkTakeAvailable(): void {
@@ -36,7 +36,7 @@ class Delay extends NetworkElement {
         return;
     }
 
-    private serviceProcess(): void {
+    private agentServiceTimer(): void {
         setTimeout(() => {
             if (!this.nextElement) {
                 throw new Error("Delay performs sending the next agent to the next element when the next element does not exist");

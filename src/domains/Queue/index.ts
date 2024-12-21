@@ -1,5 +1,5 @@
 import NetworkElement from "../NetworkElement";
-import { IS_REQUEST_RELEASE_QUEUE } from "../meta";
+import { IS_QUEUE_SEND_AGENTS } from "../meta";
 
 class Queue extends NetworkElement {
 
@@ -20,12 +20,12 @@ class Queue extends NetworkElement {
 
     }
 
-    public requestReleaseQueue(): void {
+    public requestSendAgent(): void {
         if (!this.nextElement) {
             throw new Error("Queue dispatches agents to the next element when the next element does not exist.");
         }
 
-        while (IS_REQUEST_RELEASE_QUEUE) {
+        while (IS_QUEUE_SEND_AGENTS) {
             if (!(this.agentsCount !== 0)) {
                 return;
             }

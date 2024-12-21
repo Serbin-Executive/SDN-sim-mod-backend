@@ -1,4 +1,4 @@
-import { IGetDataInfo, IGetSchemaInfo, UpdateActions } from "../meta";
+import { IGetDataInfo, IGetNeighboringElementsInfo, UpdateActionList } from "../meta";
 import { randomUUID } from "crypto";
 
 abstract class NetworkElement {
@@ -25,15 +25,15 @@ abstract class NetworkElement {
             throw new Error("Previous element not found when taking agent");
         }
 
-        this.previousElement.updateAgentsCount(UpdateActions.DECREASE, 1);
-        this.previousElement.updateAgentsLeftCount(UpdateActions.INCREASE, 1);
+        this.previousElement.updateAgentsCount(UpdateActionList.DECREASE, 1);
+        this.previousElement.updateAgentsLeftCount(UpdateActionList.INCREASE, 1);
 
-        this.updateAgentsCount(UpdateActions.INCREASE, 1);
-        this.updateAgentsCameCount(UpdateActions.INCREASE, 1);
+        this.updateAgentsCount(UpdateActionList.INCREASE, 1);
+        this.updateAgentsCameCount(UpdateActionList.INCREASE, 1);
 
     }
 
-    public getSchemaInfo(): IGetSchemaInfo {
+    public getNeighboringElementsInfo(): IGetNeighboringElementsInfo {
         if (!this.previousElement || !this.nextElement) {
             throw new Error("When requesting schema information, the previous or next elements were not found.");
         }
@@ -112,7 +112,7 @@ abstract class NetworkElement {
             return;
         }
 
-        if (action == UpdateActions.INCREASE) {
+        if (action == UpdateActionList.INCREASE) {
             this.agentsCount += value;
             return;
         }
@@ -125,7 +125,7 @@ abstract class NetworkElement {
             return;
         }
 
-        if (action == UpdateActions.INCREASE) {
+        if (action == UpdateActionList.INCREASE) {
             this.agentsCameCount += value;
             return;
         }
@@ -138,7 +138,7 @@ abstract class NetworkElement {
             return;
         }
 
-        if (action == UpdateActions.INCREASE) {
+        if (action == UpdateActionList.INCREASE) {
             this.agentsLeftCount += value;
             return;
         }

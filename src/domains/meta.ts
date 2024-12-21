@@ -4,19 +4,14 @@ export interface IGetDataInfo {
     [dataField: string]: number;
 }
 
-export interface IGetSchemaInfo {
+export interface IGetNeighboringElementsInfo {
     previousElement: NetworkElement,
     nextElement: NetworkElement
 }
 
-export interface IServiceTimer {
-    time: number;
-    isBusy: boolean;
-}
-
-export enum UpdateActions {
+export enum UpdateActionList {
     INCREASE = "+",
     DECREASE = "-"
 }
 
-export const IS_REQUEST_RELEASE_QUEUE: boolean = true;
+export const IS_QUEUE_SEND_AGENTS: boolean = true;
