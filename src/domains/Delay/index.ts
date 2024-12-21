@@ -3,13 +3,11 @@ import { IGetDataInfo, IServiceTimer } from "../meta";
 
 class Delay extends NetworkElement {
     private delayValue: number;
-    private serviceDeviceTimers: IServiceTimer[];
     private isTakeAvailable: boolean;
 
     constructor() {
         super()
         this.delayValue = 0;
-        this.serviceDeviceTimers = Array.from({ length: this.capacity! }, () => ({ time: 0, isBusy: false }));
         this.isTakeAvailable = true;
     }
 
