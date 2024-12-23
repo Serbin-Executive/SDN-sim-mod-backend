@@ -1,17 +1,27 @@
 import NetworkElement from "./NetworkElement";
 
-export interface IGetDataInfo {
+export type TSystem = "system";
+export type TNetworkElementInitiator = NetworkElement | TSystem;
+export type TNetworkElementId = string;
+export type TPreviousNetworkElements = Map<string, NetworkElement> | null;
+export type TNextNetworkElement = NetworkElement | null;
+export type TNetworkElementCapacity = number | null;
+export type TNetworkElementAgentsCount = number;
+export type TNetworkElementAgentsCameCount = number;
+export type TNetworkElementAgentsLeftCount = number | null;
+export type TStateValue =
+    | TPreviousNetworkElements
+    | TNextNetworkElement
+    | TNetworkElementCapacity
+    | TNetworkElementAgentsCount
+    | TNetworkElementAgentsCameCount
+    | TNetworkElementAgentsLeftCount;
+
+export interface ICurrentState {
     [dataField: string]: number;
 }
 
-export interface IGetNeighboringElementsInfo {
-    previousElement: NetworkElement,
-    nextElement: NetworkElement
+export interface ISurroundingNetworkElements {
+    previousElements?: TPreviousNetworkElements;
+    nextElement?: TNextNetworkElement;
 }
-
-export enum UpdateActionList {
-    INCREASE = "+",
-    DECREASE = "-"
-}
-
-export const IS_QUEUE_SEND_AGENTS: boolean = true;

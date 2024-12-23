@@ -1,14 +1,26 @@
-import { IGetDataInfo, IGetNeighboringElementsInfo, UpdateActionList } from "../meta";
+import {
+    type ICurrentState,
+    type ISurroundingNetworkElements,
+    type TNetworkElementId,
+    type TNetworkElementAgentsCameCount,
+    type TNetworkElementAgentsCount,
+    type TNetworkElementAgentsLeftCount,
+    type TNetworkElementCapacity,
+    type TNextNetworkElement,
+    type TPreviousNetworkElements,
+    type TNetworkElementInitiator,
+} from "../meta";
 import { randomUUID } from "crypto";
+import NetworkElementError from "../../Errors/NetworkElementError";
 
 abstract class NetworkElement {
-    protected id: string;
-    protected previousElement: NetworkElement | null = null;
-    protected nextElement: NetworkElement | null = null;
-    protected capacity: number | null;
-    protected agentsCount: number | null;
-    protected agentsCameCount: number | null;
-    protected agentsLeftCount: number | null;
+    protected id: TNetworkElementId;
+    protected previousElements: TPreviousNetworkElements;
+    protected nextElement: TNextNetworkElement;
+    protected capacity: TNetworkElementCapacity;
+    protected agentsCount: TNetworkElementAgentsCount;
+    protected agentsCameCount: TNetworkElementAgentsCameCount;
+    protected agentsLeftCount: TNetworkElementAgentsLeftCount;
 
     constructor() {
         this.id = randomUUID();
@@ -16,136 +28,125 @@ abstract class NetworkElement {
         this.agentsCount = 0;
         this.agentsCameCount = 0;
         this.agentsLeftCount = 0;
+        this.previousElements = null;
+        this.nextElement = null;
     }
 
-    public abstract trigger(): void;
-
-    public take(): void {
-        if (!this.previousElement) {
-            throw new Error("Previous element not found when taking agent");
+    protected getPreviousElementById(id: TNetworkElementId): NetworkElement {
+        if (!id) {
+            throw new NetworkElementError("Cannot get element by ID, ID is undefined");
         }
 
-        this.previousElement.updateAgentsCount(UpdateActionList.DECREASE, 1);
-        this.previousElement.updateAgentsLeftCount(UpdateActionList.INCREASE, 1);
+        if (!this.previousElements) {
+            throw new NetworkElementError("Cannot get element by ID, Previous elements is undefined");
+        }
 
-        this.updateAgentsCount(UpdateActionList.INCREASE, 1);
-        this.updateAgentsCameCount(UpdateActionList.INCREASE, 1);
+        const targetElement: NetworkElement | undefined = this.previousElements.get(id);
 
+        if (!targetElement) {
+            throw new NetworkElementError(`Cannot get element by ID, the Element #${id} does not exist`);
+        }
+
+        return targetElement;
     }
 
-    public getNeighboringElementsInfo(): IGetNeighboringElementsInfo {
-        if (!this.previousElement || !this.nextElement) {
-            throw new Error("When requesting schema information, the previous or next elements were not found.");
+    protected takeAgents(sourceNetworkElement: NetworkElement, amount: number): void {
+        if (!sourceNetworkElement.agentsCount || !sourceNetworkElement.agentsLeftCount) {
+            throw new NetworkElementError("Triggered takeAgents() from invalid NetworkElement");
         }
 
-        return {
-            previousElement: this.previousElement,
-            nextElement: this.nextElement
+        if (!this.agentsCount || !this.agentsCameCount) {
+            throw new NetworkElementError("Triggered takeAgents() into invalid NetworkElement");
         }
+
+        if (sourceNetworkElement.agentsCount < amount) {
+            throw new NetworkElementError("Amount is bigger than previousElement's agentsCount");
+        }
+
+        sourceNetworkElement.setAgentsCount(sourceNetworkElement.agentsCount - amount);
+        sourceNetworkElement.setAgentsLeftCount(sourceNetworkElement.agentsLeftCount + amount);
+
+        this.setAgentsCameCount(this.agentsCameCount + amount);
+        this.setAgentsCount(this.agentsCount + amount);
     }
 
-    public abstract getDataInfo(): IGetDataInfo;
+    public abstract trigger(initiator: TNetworkElementInitiator, amount: number): void;
 
-    public getId(): string {
+    public abstract getSurroundingElements(): ISurroundingNetworkElements;
+
+    public abstract getCurrentState(): ICurrentState;
+
+    public getId(): TNetworkElementId {
         return this.id;
     }
 
-    public getCapacity(): number {
+    public getCapacity(): TNetworkElementCapacity {
         if (!this.capacity) {
-            throw new Error("Request for element capacity was made when capacity does not exist");
+            throw new NetworkElementError(
+                "Cannot get capacity, capacity is undefined"
+            );
         }
 
         return this.capacity;
     }
 
-    public getAgentsCount(): number | null {
+    public getAgentsCount(): TNetworkElementAgentsCount {
         return this.agentsCount;
     }
-    public getAgentsCameCount(): number | null {
+
+    public getAgentsCameCount(): TNetworkElementAgentsCameCount {
         return this.agentsCameCount;
     }
-    public getAgentsLeftCount(): number | null {
+
+    public getAgentsLeftCount(): TNetworkElementAgentsLeftCount {
         return this.agentsLeftCount;
     }
 
-    public getPreviousElement(): NetworkElement {
-        if (!this.previousElement) {
-            throw new Error("Request for previous element executed when previous element does not exist");
+    public getPreviousElements(): TPreviousNetworkElements {
+        if (!this.previousElements) {
+            throw new NetworkElementError(
+                "Cannot get previous elements, previous elements is undefined"
+            );
         }
 
-        return this.previousElement;
+        return this.previousElements;
     }
 
-    public getNextElement(): NetworkElement {
+    public getNextElement(): TNextNetworkElement {
         if (!this.nextElement) {
-            throw new Error("Request for next element executed when previous element does not exist");
+            throw new NetworkElementError(
+                "Cannot get next element, next element is undefined"
+            );
         }
-        
+
         return this.nextElement;
     }
 
-    public setCapacity(capacity: number): void {
+    public setCapacity(capacity: TNetworkElementCapacity): void {
         this.capacity = capacity;
     }
 
-    public setAgentsCount(agentsCount: number): void {
+    public setAgentsCount(agentsCount: TNetworkElementAgentsCount): void {
         this.agentsCount = agentsCount;
     }
-    public setAgentsCameCount(agentsCameCount: number): void {
+
+    public setAgentsCameCount(agentsCameCount: TNetworkElementAgentsCameCount): void {
         this.agentsCameCount = agentsCameCount;
     }
-    public setAgentsLeftCount(agentsLeftCount: number): void {
+
+    public setAgentsLeftCount(agentsLeftCount: TNetworkElementAgentsLeftCount): void {
         this.agentsLeftCount = agentsLeftCount;
     }
 
-    public setPreviousElement(previousElement: NetworkElement): void {
-        this.previousElement = previousElement;
+    public setPreviousElements(
+        previousElements: TPreviousNetworkElements
+    ): void {
+        this.previousElements = previousElements;
     }
 
-    public setNextElement(nextElement: NetworkElement): void {
+    public setNextElement(nextElement: TNextNetworkElement): void {
         this.nextElement = nextElement;
     }
-
-    private updateAgentsCount(action: string, value: number) {
-
-        if (this.agentsCount == null) {
-            return;
-        }
-
-        if (action == UpdateActionList.INCREASE) {
-            this.agentsCount += value;
-            return;
-        }
-
-        this.agentsCount -= value;
-    }
-
-    private updateAgentsCameCount(action: string, value: number) {
-        if (this.agentsCameCount == null) {
-            return;
-        }
-
-        if (action == UpdateActionList.INCREASE) {
-            this.agentsCameCount += value;
-            return;
-        }
-
-        this.agentsCameCount -= value;
-    }
-
-    private updateAgentsLeftCount(action: string, value: number) {
-        if (this.agentsLeftCount == null) {
-            return;
-        }
-
-        if (action == UpdateActionList.INCREASE) {
-            this.agentsLeftCount += value;
-            return;
-        }
-
-        this.agentsLeftCount -= value;
-    }
-
 }
 
 export default NetworkElement;
