@@ -1,28 +1,30 @@
+import Agent from "../Agent";
 import NetworkElement from "../NetworkElement";
-import NetworkElementError from "../../Errors/NetworkElementError";
-import { ISurroundingNetworkElements, type TNetworkElementInitiator } from "../meta";
+import { ISurroundingNetworkElements } from "../meta";
 
 class SinkElement extends NetworkElement {
-
     constructor() {
         super();
         this.capacity = Infinity;
         this.nextElement = null;
-        this.agentsLeftCount = null;
+        this.agentsLeftCount = 0;
     }
 
     protected sinkAgents(): void {
         this.agentsCount = 0;
+        this.agentsList = [];
     }
 
-    public trigger(initiator: NetworkElement, amount: number = 1): void {
-        this.takeAgents(initiator, amount);
+    public trigger(initiator: NetworkElement, newAgent: Agent): boolean {
+        this.takeAgents(initiator, newAgent);
         this.sinkAgents();
+
+        return true;
     }
 
     public getSurroundingElements(): ISurroundingNetworkElements {
         if (!this.previousElements) {
-            throw new NetworkElementError("Cannot get surrounding elements, previous elements is undefined");
+            throw new Error("Cannot get surrounding elements, previous elements is undefined");
         }
 
         return {
@@ -31,9 +33,9 @@ class SinkElement extends NetworkElement {
     }
 
     public getCurrentState() {
-        if (!this.agentsCameCount || !this.agentsCount) {
-            throw new NetworkElementError("Cannot get current state, state properties are undefined");
-        }
+        // if (!this.agentsCameCount || !this.agentsCount) {
+        //     throw new Error("Cannot get current state, state properties are undefined");
+        // }
 
         return { agentsCameCount: this.agentsCameCount, }
     }

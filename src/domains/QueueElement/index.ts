@@ -1,37 +1,56 @@
+import { SendRequestsLinkedList } from "../SendRequestsLinkedList";
 import NetworkElement from "../NetworkElement";
-import NetworkElementError from "../../Errors/NetworkElementError";
 import { ISurroundingNetworkElements } from "../meta";
-
-// TODO virtual multiplier
-const QUEUE_INTERVAL = 15; //ms
+import Agent from "../Agent";
 
 class QueueElement extends NetworkElement {
-    private isServing: boolean = false;
+    private sendRequestsQueue: SendRequestsLinkedList;
 
     constructor() {
         super();
+
+        this.sendRequestsQueue = new SendRequestsLinkedList();
     }
 
-    private setup(): void {
-        if (!this.nextElement) {
-            throw new Error("Triggered setup(), next element is undefined");
+    public trigger(initiator: NetworkElement, newAgent: Agent): boolean {
+        const currentNextElement = this.nextElement;
+
+        this.takeAgents(initiator, newAgent);
+
+        if (!currentNextElement) {
+            throw new Error("Cannot trigger next element, next elements are undefined");
         }
 
-        setInterval(this.nextElement.trigger, QUEUE_INTERVAL, this, 1);
-        this.isServing = true;
+        this.sendRequestsQueue.addFunction(() => currentNextElement.trigger(this, newAgent));
+
+        if (!currentNextElement.takeSignal) {
+            currentNextElement.trigger(this, newAgent);
+
+            return true;
+        }
+
+        const isTakeAvailable: boolean = currentNextElement.trigger(this, newAgent);
+
+        if (!isTakeAvailable) {
+            currentNextElement.takeSignal.once("takeAvailable", () => {
+                const takingFunction = this.sendRequestsQueue.getFirstFunctionInQueue();
+                takingFunction();
+            }
+            );
+
+            return false;
+        }
+
+        return true;
     }
 
-    public trigger(initiator: NetworkElement, amount: number = 1): void {
-        if (!this.isServing) {
-            this.setup();
-        }
-
-        this.takeAgents(initiator, amount);
+    public getSendRequestsQueue(): SendRequestsLinkedList {
+        return this.sendRequestsQueue;
     }
 
     public getSurroundingElements(): ISurroundingNetworkElements {
         if (!this.previousElements || !this.nextElement) {
-            throw new NetworkElementError("Cannot get surroundings elements, previous or next elements are undefined");
+            throw new Error("Cannot get surroundings elements, previous or next elements are undefined");
         }
 
         return {
@@ -41,15 +60,15 @@ class QueueElement extends NetworkElement {
     }
 
     public getCurrentState() {
-        if (!this.agentsCount || !this.agentsCameCount || !this.agentsLeftCount) {
-            throw new NetworkElementError("Cannot get current state, state properties are undefined");
-        }
-
         return {
             agentsCount: this.agentsCount,
             agentsCameCount: this.agentsCameCount,
             agentsLeftCount: this.agentsLeftCount,
         }
+    }
+
+    public setSendRequestsQueue(newQueue: SendRequestsLinkedList) {
+        this.sendRequestsQueue = newQueue;
     }
 }
 

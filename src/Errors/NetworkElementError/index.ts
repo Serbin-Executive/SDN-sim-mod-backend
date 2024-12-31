@@ -7,7 +7,7 @@ class NetworkElementError extends Error {
     constructor(message: string) {
         let errorMessage: string;
 
-        const callerElement: any = NetworkElementError.caller;
+        const callerElement: any = Error.caller;
 
         const networkElementName: string =
             callerElement?.constructor?.name ?? "";
@@ -35,4 +35,4 @@ class NetworkElementError extends Error {
     }
 }
 
-export default NetworkElementError;
+export default NetworkElement;
