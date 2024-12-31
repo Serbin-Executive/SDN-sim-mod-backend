@@ -1,3 +1,4 @@
+import Agent from "../Agent";
 import {
     type ICurrentState,
     type ISurroundingNetworkElements,
@@ -9,68 +10,68 @@ import {
     type TNextNetworkElement,
     type TPreviousNetworkElements,
     type TNetworkElementInitiator,
+    type TTakeSignal,
+    type TAgentsList,
 } from "../meta";
 import { randomUUID } from "crypto";
-import NetworkElementError from "../../Errors/NetworkElementError";
 
 abstract class NetworkElement {
     protected id: TNetworkElementId;
+    protected agentsList: TAgentsList;
     protected previousElements: TPreviousNetworkElements;
     protected nextElement: TNextNetworkElement;
     protected capacity: TNetworkElementCapacity;
     protected agentsCount: TNetworkElementAgentsCount;
     protected agentsCameCount: TNetworkElementAgentsCameCount;
     protected agentsLeftCount: TNetworkElementAgentsLeftCount;
+    public takeSignal: TTakeSignal;
 
     constructor() {
         this.id = randomUUID();
+        this.agentsList = [];
+        this.previousElements = null;
+        this.nextElement = null;
         this.capacity = 0;
         this.agentsCount = 0;
         this.agentsCameCount = 0;
         this.agentsLeftCount = 0;
-        this.previousElements = null;
-        this.nextElement = null;
+        this.takeSignal = null;
     }
 
     protected getPreviousElementById(id: TNetworkElementId): NetworkElement {
         if (!id) {
-            throw new NetworkElementError("Cannot get element by ID, ID is undefined");
+            throw new Error("Cannot get element by ID, ID is undefined");
         }
 
         if (!this.previousElements) {
-            throw new NetworkElementError("Cannot get element by ID, Previous elements is undefined");
+            throw new Error("Cannot get element by ID, Previous elements is undefined");
         }
 
         const targetElement: NetworkElement | undefined = this.previousElements.get(id);
 
         if (!targetElement) {
-            throw new NetworkElementError(`Cannot get element by ID, the Element #${id} does not exist`);
+            throw new Error(`Cannot get element by ID, the Element #${id} does not exist`);
         }
 
         return targetElement;
     }
 
-    protected takeAgents(sourceNetworkElement: NetworkElement, amount: number): void {
-        if (!sourceNetworkElement.agentsCount || !sourceNetworkElement.agentsLeftCount) {
-            throw new NetworkElementError("Triggered takeAgents() from invalid NetworkElement");
+    protected takeAgents(sourceNetworkElement: NetworkElement, newAgent: Agent): void {
+        if ((sourceNetworkElement.agentsCount < 1) || ((this.agentsCount + 1) > this.capacity)) {
+            // return;
+            throw new Error("Cannot taking agent, NetworkElement is filled");
         }
 
-        if (!this.agentsCount || !this.agentsCameCount) {
-            throw new NetworkElementError("Triggered takeAgents() into invalid NetworkElement");
-        }
+        sourceNetworkElement.setAgentsCount(sourceNetworkElement.agentsCount - 1);
+        sourceNetworkElement.setAgentsLeftCount(sourceNetworkElement.agentsLeftCount + 1);
 
-        if (sourceNetworkElement.agentsCount < amount) {
-            throw new NetworkElementError("Amount is bigger than previousElement's agentsCount");
-        }
+        this.agentsList.push(newAgent);
 
-        sourceNetworkElement.setAgentsCount(sourceNetworkElement.agentsCount - amount);
-        sourceNetworkElement.setAgentsLeftCount(sourceNetworkElement.agentsLeftCount + amount);
-
-        this.setAgentsCameCount(this.agentsCameCount + amount);
-        this.setAgentsCount(this.agentsCount + amount);
+        this.setAgentsCameCount(this.agentsCameCount + 1);
+        this.setAgentsCount(this.agentsCount + 1);
     }
 
-    public abstract trigger(initiator: TNetworkElementInitiator, amount: number): void;
+    public abstract trigger(initiator: TNetworkElementInitiator, newAgent: Agent): boolean;
 
     public abstract getSurroundingElements(): ISurroundingNetworkElements;
 
@@ -82,7 +83,7 @@ abstract class NetworkElement {
 
     public getCapacity(): TNetworkElementCapacity {
         if (!this.capacity) {
-            throw new NetworkElementError(
+            throw new Error(
                 "Cannot get capacity, capacity is undefined"
             );
         }
@@ -104,7 +105,7 @@ abstract class NetworkElement {
 
     public getPreviousElements(): TPreviousNetworkElements {
         if (!this.previousElements) {
-            throw new NetworkElementError(
+            throw new Error(
                 "Cannot get previous elements, previous elements is undefined"
             );
         }
@@ -114,7 +115,7 @@ abstract class NetworkElement {
 
     public getNextElement(): TNextNetworkElement {
         if (!this.nextElement) {
-            throw new NetworkElementError(
+            throw new Error(
                 "Cannot get next element, next element is undefined"
             );
         }
