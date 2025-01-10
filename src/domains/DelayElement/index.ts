@@ -95,7 +95,6 @@ class DelayElement extends NetworkElement {
             clearTimeout(serviceProcess);
         });
 
-        this.takeSignal = null;
     }
 }
 

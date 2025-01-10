@@ -6,12 +6,14 @@ import QueueElement from "../../domains/QueueElement";
 import SinkElement from "../../domains/SinkElement";
 import SourceElement from "../../domains/SourceElement"
 import { SendRequestsLinkedList } from "../../domains/SendRequestsLinkedList";
+import { sendModelCurrentState } from "../WebSocketController";
+import { IModelCurrentState, INetworElementState, IStatisticField } from "../WebSocketController/meta";
 
 const SPAWN_AGENTS_VALUE: number = 3;
 const INTERVAL_VALUE: number = 1000;
 const QUEUE_CAPACITY: number = 10;
 const DELAY_CAPACITY: number = 3;
-const DELAY_VALUE: number = 5000;
+const DELAY_VALUE: number = 500;
 
 let workTimePerMilliseconds: number = 0;
 
@@ -51,9 +53,11 @@ const settingNextElementsInSequence = (elements: NetworkElement[]): void => {
 }
 
 export const clearModel = (): void => {
-    spawnAgentsElements.length = 0;
-    networkElements.length = 0;
-    queueElements.length = 0;
+    networkElements.forEach((element) => {
+        element.setAgentsCameCount(0);
+        element.setAgentsCount(0);
+        element.setAgentsLeftCount(0);
+    })
 
     workTimePerMilliseconds = 0;
 }
@@ -97,8 +101,9 @@ const modelIntervalAction = (): void => {
 
     workTimePerMilliseconds += INTERVAL_VALUE;
 
-    getModelWorkCurrentState(networkElements);
-    console.log("\nTICK\n");
+    const modelWorkCurrentStateInfo: IModelCurrentState = getModelWorkCurrentState(networkElements);
+
+    sendModelCurrentState(modelWorkCurrentStateInfo);
 }
 
 export const startModel = (): void => {
@@ -107,18 +112,40 @@ export const startModel = (): void => {
     console.log("\nSTART SUCCESS\n");
 }
 
-export const getModelWorkCurrentState = (modelElements: NetworkElement[]) => {
+export const getModelWorkCurrentState = (modelElements: NetworkElement[]): IModelCurrentState => {
+    const currentState: IModelCurrentState = {
+        time: String(workTimePerMilliseconds),
+        networkElementsStatesList: [],
+    }
+
     console.log(`\n\nWORK TIME: ${workTimePerMilliseconds} ms\n`);
 
     modelElements.forEach((modelElement) => {
+        const currentNetworkElementState: INetworElementState = {
+            id: modelElement.getId(),
+            type: modelElement.constructor.name,
+            statisticFields: [],
+        }
         console.log(`\n[${modelElement.constructor.name}#${modelElement.getId()}] Statistic:`);
+
 
         const modelElementStatistic: ICurrentState = modelElement.getCurrentState();
 
         Object.entries(modelElementStatistic).forEach(([fieldName, fieldValue]) => {
+            const currentStatisticField: IStatisticField = {
+                fieldName: fieldName,
+                fieldValue: String(fieldValue),
+            }
+
+            currentNetworkElementState.statisticFields.push(currentStatisticField);
+
             console.log(`${fieldName}: ${fieldValue}`);
         })
+
+        currentState.networkElementsStatesList.push(currentNetworkElementState);
     })
+
+    return currentState;
 }
 
 export const stopModel = (): void => {
@@ -134,8 +161,7 @@ export const stopModel = (): void => {
 
     queueElements.forEach((element) => {
         element.setSendRequestsQueue(new SendRequestsLinkedList);
-    })
+    });
 
-    console.log("\n\n\nMODEL IS STOPPED, FINAL TICK:\n");
-    getModelWorkCurrentState(networkElements);
+    clearModel();
 }
