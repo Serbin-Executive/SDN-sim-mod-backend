@@ -57,10 +57,10 @@ abstract class NetworkElement {
     }
 
     protected takeAgents(sourceNetworkElement: NetworkElement, newAgent: Agent): void {
-        if ((sourceNetworkElement.agentsCount < 1) || ((this.agentsCount + 1) > this.capacity)) {
-            // return;
-            throw new Error("Cannot taking agent, NetworkElement is filled");
-        }
+        // if ((sourceNetworkElement.agentsCount < 1) || ((this.agentsCount + 1) > this.capacity)) {
+        //     // return;
+        //     throw new Error("Cannot taking agent, NetworkElement is filled");
+        // }
 
         sourceNetworkElement.setAgentsCount(sourceNetworkElement.agentsCount - 1);
         sourceNetworkElement.setAgentsLeftCount(sourceNetworkElement.agentsLeftCount + 1);

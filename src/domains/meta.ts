@@ -11,6 +11,7 @@ export type TNetworkElementCapacity = number;
 export type TNetworkElementAgentsCount = number;
 export type TNetworkElementAgentsCameCount = number;
 export type TNetworkElementAgentsLeftCount = number;
+export type TNetworkElementAgentsLostCount = number;
 export type TStateValue =
     | TPreviousNetworkElements
     | TNextNetworkElement
