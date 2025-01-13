@@ -3,12 +3,12 @@ import WebSocket from "ws";
 
 export class Client {
     private socket: TClientSocket;
-    private isMain: boolean;
+    private isHost: boolean;
     private ID: TClientID;
 
     constructor() {
         this.socket = null;
-        this.isMain = false;
+        this.isHost = false;
         this.ID = null;
     }
 
@@ -16,8 +16,8 @@ export class Client {
         return this.socket;
     }
 
-    public getIsMain(): boolean {
-        return this.isMain;
+    public getIsHost(): boolean {
+        return this.isHost;
     }
 
     public getID(): TClientID {
@@ -28,8 +28,8 @@ export class Client {
         this.socket = webSocket;
     }
     
-    public setIsMain(isMain: boolean): void {
-        this.isMain = isMain;
+    public setIsHost(isHost: boolean): void {
+        this.isHost = isHost;
     }
 
     public setID(ID: string): void {

@@ -6,9 +6,10 @@ import QueueElement from "../../domains/QueueElement";
 import SinkElement from "../../domains/SinkElement";
 import SourceElement from "../../domains/SourceElement"
 import { SendRequestsLinkedList } from "../../domains/SendRequestsLinkedList";
-import { sendModelsLastStates } from "../WebSocketController";
+import { sendMessageAllClients } from "../WebSocketController";
 import { IModelLastState, INetworElementState, IStatisticField, TModelsLastStates, TModelsWork, getRandomArbitrary } from "./meta";
 import { Model } from "../../domains/Model";
+import { ServerMessageTypes } from "../WebSocketController/meta";
 
 const modelsList: Model[] = [];
 
@@ -22,6 +23,8 @@ const DELAY_VALUE: number = 500;
 
 let workTimePerMilliseconds: number = 0;
 let modelsWork: TModelsWork = null;
+export let isModelsStart: boolean = false;
+export let isModelsStop: boolean = true;
 
 const addElementsInList = (list: NetworkElement[], ...elements: NetworkElement[]): void => {
     elements.forEach((element) => {
@@ -52,6 +55,8 @@ const settingNextElementsInSequence = (elements: NetworkElement[]): void => {
 }
 
 export const createModels = (): void => {
+    modelsList.splice(0, modelsList.length);
+
     for (let index = 0; index < MODELS_COUNT_VALUE; index++) {
         const newModel = new Model();
 
@@ -99,35 +104,36 @@ export const getModelWorkCurrentState = (modelElements: NetworkElement[]): IMode
         networkElementsStatesList: [],
     };
 
-    console.log(`\n\nWORK TIME: ${workTimePerMilliseconds} ms\n`);
-
     modelElements.forEach((modelElement) => {
         const currentNetworkElementState: INetworElementState = {
             id: modelElement.getId(),
             type: modelElement.constructor.name,
             statisticFields: [],
-        }
-        console.log(`\n[${modelElement.constructor.name}#${modelElement.getId()}] Statistic:`);
-
+        };
 
         const modelElementStatistic: ICurrentState = modelElement.getCurrentState();
+        
+        console.log(`\n[${modelElement.constructor.name}#${modelElement.getId()}]`);
 
-        Object.entries(modelElementStatistic).forEach(([fieldName, fieldValue]) => {
+        const statisticFieldsArray = Object.entries(modelElementStatistic).map(([fieldName, fieldValue]) => {
             const currentStatisticField: IStatisticField = {
                 fieldName: fieldName,
                 fieldValue: String(fieldValue),
-            }
+            };
 
             currentNetworkElementState.statisticFields.push(currentStatisticField);
 
-            console.log(`${fieldName}: ${fieldValue}`);
-        })
+            return { Field: fieldName, Value: fieldValue };
+        });
+
+        console.table(statisticFieldsArray);
 
         currentState.networkElementsStatesList.push(currentNetworkElementState);
-    })
+    });
 
     return currentState;
 }
+
 
 const modelsIntervalAction = (): void => {
     modelsList.forEach((model) => {
@@ -143,6 +149,8 @@ const modelsIntervalAction = (): void => {
 
     workTimePerMilliseconds += INTERVAL_VALUE;
 
+    console.log(`\n\nWORK TIME: ${workTimePerMilliseconds} ms\n`);
+
     const modelsWorkCurrentStatesInfo: TModelsLastStates = [];
 
     modelsList.forEach((model) => {
@@ -155,11 +163,18 @@ const modelsIntervalAction = (): void => {
         modelsWorkCurrentStatesInfo.push(modelCurrentState);
     })
 
-    sendModelsLastStates(modelsWorkCurrentStatesInfo);
+    sendMessageAllClients(ServerMessageTypes.MODELS_CURRENT_STATE, modelsWorkCurrentStatesInfo);
 }
 
 export const startModels = (): void => {
+    if (isModelsStart) {
+        return;
+    }
+
     modelsWork = setInterval(modelsIntervalAction, INTERVAL_VALUE);
+
+    isModelsStop = false;
+    isModelsStart = true;
 
     console.log("\nSTART SUCCESS\n");
 }
@@ -181,6 +196,10 @@ export const clearModels = (): void => {
 }
 
 export const stopModels = (): void => {
+    if (isModelsStop) {
+        return;
+    }
+
     if (!modelsWork) {
         throw new Error("Cannot stop models, models has not been started yet");
     }
@@ -205,6 +224,9 @@ export const stopModels = (): void => {
 
 
     clearModels();
+
+    isModelsStart = false;
+    isModelsStop = true;
 
     console.log("\nSTOP SUCCESS\n");
 }
