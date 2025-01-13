@@ -15,13 +15,14 @@ const modelsList: Model[] = [];
 
 const MODELS_COUNT_VALUE: number = 25;
 
-const SPAWN_AGENTS_VALUE: number = 5;
-const INTERVAL_VALUE: number = 1000;
+const MIN_SPAWN_AGENTS_VALUE: number = 3;
+const MAX_SPAWN_AGENTS_VALUE: number = 8;
+const INTERVAL_VALUE: number = 700;
 const QUEUE_CAPACITY: number = 10;
-const DELAY_CAPACITY: number = 3;
-const DELAY_VALUE: number = 500;
+const DELAY_CAPACITY: number = 5;
+const DELAY_VALUE: number = 700;
 
-let workTimePerMilliseconds: number = 0;
+let workTimePerMilliseconds: number = 0 - INTERVAL_VALUE;
 let modelsWork: TModelsWork = null;
 export let isModelsStart: boolean = false;
 export let isModelsStop: boolean = true;
@@ -140,7 +141,7 @@ const modelsIntervalAction = (): void => {
         const sourceElements = model.getSourceElements();
 
         // for (let agentIndex = 0; agentIndex < SPAWN_AGENTS_VALUE; agentIndex++) {
-        for (let agentIndex = 0; agentIndex < getRandomArbitrary(1, SPAWN_AGENTS_VALUE) ; agentIndex++) {
+        for (let agentIndex = 0; agentIndex < getRandomArbitrary(MIN_SPAWN_AGENTS_VALUE, MAX_SPAWN_AGENTS_VALUE) ; agentIndex++) {
             sourceElements.forEach((element) => {    
                 element.trigger("system", new Agent());
             });
@@ -181,14 +182,19 @@ export const startModels = (): void => {
 
 export const clearModels = (): void => {
     modelsList.forEach((model) => {
-        let networkElements = model.getNetworkElements();
+        const networkElements = model.getNetworkElements();
+        const queueElements = model.getQueueElements();
 
         networkElements.forEach((element) => {
             element.setAgentsCameCount(0);
             element.setAgentsCount(0);
             element.setAgentsLeftCount(0);
         });
-        
+
+        queueElements.forEach((element) => {
+            element.setAgentsLostCount(0);
+        });
+
         model.setNetworkElements(networkElements);
     })
 
