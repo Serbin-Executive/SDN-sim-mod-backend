@@ -14,7 +14,28 @@ class QueueElement extends NetworkElement {
         this.agentsLostCount = 0;
     }
 
-    public trigger(initiator: NetworkElement, newAgent: Agent): boolean {
+    public sendListenerInit(): void {
+        const currentNextElement = this.nextElement;
+
+        if (!currentNextElement) {
+            throw new Error("Cannot trigger next element, next elements are undefined");
+        }
+
+        if (!currentNextElement.takeSignal) {
+            return;
+        }
+        
+        currentNextElement.takeSignal.on("takeAvailable", () => {
+            if (!this.sendRequestsQueue.length) {
+                return;
+            }
+            
+            this.sendRequestsQueue.getFirstFunctionInQueue()();
+        }
+        );  
+    }
+
+    public trigger(initiator: NetworkElement, newAgent: Agent): void {
 
         const currentNextElement = this.nextElement;
 
@@ -25,7 +46,7 @@ class QueueElement extends NetworkElement {
 
             this.agentsLostCount += 1;
 
-            return false;
+            return;
         }
 
         this.takeAgents(initiator, newAgent);
@@ -34,30 +55,19 @@ class QueueElement extends NetworkElement {
             throw new Error("Cannot trigger next element, next elements are undefined");
         }
 
-        if (!currentNextElement.takeSignal) {
-            currentNextElement.trigger(this, newAgent);
+        this.sendRequestsQueue.addFunction(() => {
+            currentNextElement.trigger(this, newAgent)
+        });
 
-            return true;
-        }
-
-        const isTakeAvailable: boolean = currentNextElement.trigger(this, newAgent);
+        const isTakeAvailable: boolean = (currentNextElement.getAgentsCount() < currentNextElement.getCapacity());
 
         if (!isTakeAvailable) {
-            this.sendRequestsQueue.addFunction(() => currentNextElement.trigger(this, newAgent));
+            return;
+        };
 
-            currentNextElement.takeSignal.once("takeAvailable", () => {
-                const takingFunction = this.sendRequestsQueue.getFirstFunctionInQueue();
+        const takingFunction = this.sendRequestsQueue.getFirstFunctionInQueue();
 
-                console.log(this.sendRequestsQueue.length);
-
-                takingFunction();
-            }
-            );
-
-            return false;
-        }
-
-        return true;
+        takingFunction();
     }
 
     public getSendRequestsQueue(): SendRequestsLinkedList {

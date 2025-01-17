@@ -71,7 +71,7 @@ abstract class NetworkElement {
         this.setAgentsCount(this.agentsCount + 1);
     }
 
-    public abstract trigger(initiator: TNetworkElementInitiator, newAgent: Agent): boolean;
+    public abstract trigger(initiator: TNetworkElementInitiator, newAgent: Agent): void;
 
     public abstract getSurroundingElements(): ISurroundingNetworkElements;
 

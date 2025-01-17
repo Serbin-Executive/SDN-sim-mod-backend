@@ -9,7 +9,7 @@ class SourceElement extends NetworkElement {
         this.previousElements = null;
     }
 
-    public trigger(initiator: TNetworkElementInitiator = "system", newAgent: Agent): boolean {
+    public trigger(initiator: TNetworkElementInitiator = "system", newAgent: Agent): void {
         if (!this.nextElement) {
             throw new Error("Triggered trigger() into invalid NetworkElement");
         }
@@ -18,8 +18,6 @@ class SourceElement extends NetworkElement {
         this.setAgentsCameCount(this.agentsCameCount + 1);
 
         this.nextElement.trigger(this, newAgent);
-
-        return true;
     }
 
     public getSurroundingElements(): ISurroundingNetworkElements {
