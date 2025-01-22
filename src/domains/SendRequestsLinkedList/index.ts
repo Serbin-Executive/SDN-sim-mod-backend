@@ -15,6 +15,9 @@ export class SendRequestsLinkedList {
 
         if (!this.firstNodeInQueue) {
             this.firstNodeInQueue = newFunctionInQueue;
+
+            this.length++;
+
             return;
         }
 

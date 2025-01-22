@@ -13,14 +13,14 @@ import { ServerMessageTypes } from "../WebSocketController/meta";
 
 const modelsList: Model[] = [];
 
-const MODELS_COUNT_VALUE: number = 25;
+const MODELS_COUNT_VALUE: number = 1;
 
-const MIN_SPAWN_AGENTS_VALUE: number = 3;
-const MAX_SPAWN_AGENTS_VALUE: number = 8;
-const INTERVAL_VALUE: number = 700;
+const MIN_SPAWN_AGENTS_VALUE: number = 5;
+const MAX_SPAWN_AGENTS_VALUE: number = 10;
+const INTERVAL_VALUE: number = 100;
 const QUEUE_CAPACITY: number = 10;
 const DELAY_CAPACITY: number = 5;
-const DELAY_VALUE: number = 700;
+const DELAY_VALUE: number = 50;
 
 let workTimePerMilliseconds: number = 0 - INTERVAL_VALUE;
 let modelsWork: TModelsWork = null;
@@ -85,7 +85,8 @@ export const createModels = (): void => {
     
         queueElement.setCapacity(QUEUE_CAPACITY);
         delayElement.setCapacity(DELAY_CAPACITY);
-    
+
+        queueElement.sendListenerInit();
         delayElement.setDelayValue(DELAY_VALUE);
 
         newModel.setSourceElements(sourceElements);
