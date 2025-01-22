@@ -5,10 +5,6 @@ export enum ModelWorkingCommands {
     STOP = "stop",
 }
 
-export const ModelWorkingCommandsIDList: string[] = [
-    "start", "stop"
-]
-
 export interface IServerMessage {
     messageType: string;
     message: any;
@@ -16,36 +12,11 @@ export interface IServerMessage {
 
 export const enum ServerMessageTypes {
     MESSAGE = "message",
-    MODELWORKINGCOMMANDS = "model working commands",
-    MODELCURRENTSTATE = "model current state",
+    MODEL_WORKING_COMMANDS = "model working commands",
+    MODEL_CURRENT_STATE = "model current state",
 }
 
 export const enum ServerMessageTexts {
-    CONNECTMESSAGE = "You connected to server through WebSocket!",
-}
-
-export interface IClientCommandFunctionInfo {
-    commandId: string;
-    function: any;
-}
-
-export type TClientCommandFunctionsList = IClientCommandFunctionInfo[];
-
-export interface IStatisticField {
-    fieldName: string;
-    fieldValue: string;
-}
-
-export type TStatisticFields = IStatisticField[];
-
-export interface INetworElementState {
-    id: string;
-    type: string;
-    statisticFields: TStatisticFields;
-}
-
-export interface IModelCurrentState {
-    time: string;
-    networkElementsStatesList: INetworElementState[];
+    CONNECT_MESSAGE = "You connected to server through WebSocket!",
 }
 

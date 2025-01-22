@@ -1,22 +1,23 @@
 import WebSocket from "ws";
-import { createModel, startModel, stopModel } from "../ModelController";
-import { WEB_CLIENT_PORT, ModelWorkingCommands, IServerMessage, ServerMessageTypes, ServerMessageTexts, IModelCurrentState, ModelWorkingCommandsIDList } from "./meta";
+import { startModels, stopModels } from "../ModelsController";
+import { WEB_CLIENT_PORT, ModelWorkingCommands, IServerMessage, ServerMessageTypes, ServerMessageTexts } from "./meta";
 import { Client } from "../../domains/Client";
 import { randomUUID } from "crypto";
+import { TModelsLastStates } from "../ModelsController/meta";
 
 let clientsList: Client[] = [];
 
 const MODEL_WORKING_COMMANDS = Object.values(ModelWorkingCommands);
 
 const ActionsInfoList: Record<ModelWorkingCommands, () => void> = {
-    [ModelWorkingCommands.START]: startModel,
-    [ModelWorkingCommands.STOP]: stopModel,
+    [ModelWorkingCommands.START]: startModels,
+    [ModelWorkingCommands.STOP]: stopModels,
 }
 
 export const sendStartMessage = (webSocketClient: WebSocket): void => {
     const startMessage: IServerMessage = {
         messageType: ServerMessageTypes.MESSAGE,
-        message: ServerMessageTexts.CONNECTMESSAGE,
+        message: ServerMessageTexts.CONNECT_MESSAGE,
     }
     webSocketClient.send(JSON.stringify(startMessage));
 }
@@ -24,18 +25,18 @@ export const sendStartMessage = (webSocketClient: WebSocket): void => {
 export const sendModalCommandsMessage = (webSocketClient: WebSocket): void => {
     const modelWorkingCommands: string[] = MODEL_WORKING_COMMANDS;
     const modelWorkingCommandsMessage: IServerMessage = {
-        messageType: ServerMessageTypes.MODELWORKINGCOMMANDS,
+        messageType: ServerMessageTypes.MODEL_WORKING_COMMANDS,
         message: modelWorkingCommands,
     }
 
     webSocketClient.send(JSON.stringify(modelWorkingCommandsMessage));
 }
 
-export const sendModelCurrentState = (modelCurrentState: IModelCurrentState): void => {
+export const sendModelsLastStates = (modelsLastStates: TModelsLastStates): void => {
     clientsList.forEach((client) => {
         const modelCurrentStateMessage: IServerMessage = {
-            messageType: ServerMessageTypes.MODELCURRENTSTATE,
-            message: modelCurrentState,
+            messageType: ServerMessageTypes.MODEL_CURRENT_STATE,
+            message: modelsLastStates,
         }
 
         const clientSocket = client.getSocket();
@@ -79,7 +80,7 @@ const handleClientCommand = (commandID: string) => {
 
 export const hanldeClientLeave = (leavedClientID: string) => {
     if (clientsList[0].getID() === leavedClientID) {
-        stopModel();
+        stopModels();
     }
     
     clientsList = clientsList.filter((client) =>

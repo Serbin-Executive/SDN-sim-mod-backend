@@ -1,14 +1,14 @@
 import express, { type Express } from "express";
 import DefaultErrorHandler from "./middlewares/DefaultErrorHandler";
 import { webSocketCreateConnection } from "./controllers/WebSocketController";
-import { createModel } from "./controllers/ModelController";
+import { createModels, startModels, stopModels } from "./controllers/ModelsController";
 
 const app: Express = express();
 const port = process.env.PORT || 5500;
 
 app.use(DefaultErrorHandler);
 
-createModel();
+createModels();
 
 webSocketCreateConnection();
 
