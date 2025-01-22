@@ -81,6 +81,7 @@ class DelayElement extends NetworkElement {
             agentsCameCount: this.agentsCameCount,
             agentsLeftCount: this.agentsLeftCount,
             delayValue: this.delayValue,
+            delayCapacity: this.capacity,
         }
     }
 

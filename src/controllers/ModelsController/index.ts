@@ -17,10 +17,10 @@ const MODELS_COUNT_VALUE: number = 1;
 
 const MIN_SPAWN_AGENTS_VALUE: number = 5;
 const MAX_SPAWN_AGENTS_VALUE: number = 10;
-const INTERVAL_VALUE: number = 100;
+const INTERVAL_VALUE: number = 2000;
 const QUEUE_CAPACITY: number = 10;
 const DELAY_CAPACITY: number = 5;
-const DELAY_VALUE: number = 50;
+const DELAY_VALUE: number = 1000;
 
 let workTimePerMilliseconds: number = 0 - INTERVAL_VALUE;
 let modelsWork: TModelsWork = null;
