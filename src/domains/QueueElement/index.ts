@@ -15,11 +15,16 @@ class QueueElement extends NetworkElement {
     }
 
     public trigger(initiator: NetworkElement, newAgent: Agent): boolean {
+
         const currentNextElement = this.nextElement;
 
         if ((this.agentsCount + 1) > this.capacity) {
+            const initiatorAgentsLeftCount = initiator.getAgentsLeftCount();
+
+            initiator.setAgentsLeftCount(initiatorAgentsLeftCount + 1);
+
             this.agentsLostCount += 1;
-            
+
             return false;
         }
 
@@ -28,8 +33,6 @@ class QueueElement extends NetworkElement {
         if (!currentNextElement) {
             throw new Error("Cannot trigger next element, next elements are undefined");
         }
-
-        this.sendRequestsQueue.addFunction(() => currentNextElement.trigger(this, newAgent));
 
         if (!currentNextElement.takeSignal) {
             currentNextElement.trigger(this, newAgent);
@@ -40,8 +43,13 @@ class QueueElement extends NetworkElement {
         const isTakeAvailable: boolean = currentNextElement.trigger(this, newAgent);
 
         if (!isTakeAvailable) {
+            this.sendRequestsQueue.addFunction(() => currentNextElement.trigger(this, newAgent));
+
             currentNextElement.takeSignal.once("takeAvailable", () => {
                 const takingFunction = this.sendRequestsQueue.getFirstFunctionInQueue();
+
+                console.log(this.sendRequestsQueue.length);
+
                 takingFunction();
             }
             );

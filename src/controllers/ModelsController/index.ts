@@ -6,22 +6,26 @@ import QueueElement from "../../domains/QueueElement";
 import SinkElement from "../../domains/SinkElement";
 import SourceElement from "../../domains/SourceElement"
 import { SendRequestsLinkedList } from "../../domains/SendRequestsLinkedList";
-import { sendModelsLastStates } from "../WebSocketController";
+import { sendMessageAllClients } from "../WebSocketController";
 import { IModelLastState, INetworElementState, IStatisticField, TModelsLastStates, TModelsWork, getRandomArbitrary } from "./meta";
 import { Model } from "../../domains/Model";
+import { ServerMessageTypes } from "../WebSocketController/meta";
 
 const modelsList: Model[] = [];
 
 const MODELS_COUNT_VALUE: number = 25;
 
-const SPAWN_AGENTS_VALUE: number = 5;
-const INTERVAL_VALUE: number = 1000;
+const MIN_SPAWN_AGENTS_VALUE: number = 3;
+const MAX_SPAWN_AGENTS_VALUE: number = 8;
+const INTERVAL_VALUE: number = 700;
 const QUEUE_CAPACITY: number = 10;
-const DELAY_CAPACITY: number = 3;
-const DELAY_VALUE: number = 500;
+const DELAY_CAPACITY: number = 5;
+const DELAY_VALUE: number = 700;
 
-let workTimePerMilliseconds: number = 0;
+let workTimePerMilliseconds: number = 0 - INTERVAL_VALUE;
 let modelsWork: TModelsWork = null;
+export let isModelsStart: boolean = false;
+export let isModelsStop: boolean = true;
 
 const addElementsInList = (list: NetworkElement[], ...elements: NetworkElement[]): void => {
     elements.forEach((element) => {
@@ -52,6 +56,8 @@ const settingNextElementsInSequence = (elements: NetworkElement[]): void => {
 }
 
 export const createModels = (): void => {
+    modelsList.splice(0, modelsList.length);
+
     for (let index = 0; index < MODELS_COUNT_VALUE; index++) {
         const newModel = new Model();
 
@@ -99,42 +105,43 @@ export const getModelWorkCurrentState = (modelElements: NetworkElement[]): IMode
         networkElementsStatesList: [],
     };
 
-    console.log(`\n\nWORK TIME: ${workTimePerMilliseconds} ms\n`);
-
     modelElements.forEach((modelElement) => {
         const currentNetworkElementState: INetworElementState = {
             id: modelElement.getId(),
             type: modelElement.constructor.name,
             statisticFields: [],
-        }
-        console.log(`\n[${modelElement.constructor.name}#${modelElement.getId()}] Statistic:`);
-
+        };
 
         const modelElementStatistic: ICurrentState = modelElement.getCurrentState();
+        
+        console.log(`\n[${modelElement.constructor.name}#${modelElement.getId()}]`);
 
-        Object.entries(modelElementStatistic).forEach(([fieldName, fieldValue]) => {
+        const statisticFieldsArray = Object.entries(modelElementStatistic).map(([fieldName, fieldValue]) => {
             const currentStatisticField: IStatisticField = {
                 fieldName: fieldName,
                 fieldValue: String(fieldValue),
-            }
+            };
 
             currentNetworkElementState.statisticFields.push(currentStatisticField);
 
-            console.log(`${fieldName}: ${fieldValue}`);
-        })
+            return { Field: fieldName, Value: fieldValue };
+        });
+
+        console.table(statisticFieldsArray);
 
         currentState.networkElementsStatesList.push(currentNetworkElementState);
-    })
+    });
 
     return currentState;
 }
+
 
 const modelsIntervalAction = (): void => {
     modelsList.forEach((model) => {
         const sourceElements = model.getSourceElements();
 
         // for (let agentIndex = 0; agentIndex < SPAWN_AGENTS_VALUE; agentIndex++) {
-        for (let agentIndex = 0; agentIndex < getRandomArbitrary(1, SPAWN_AGENTS_VALUE) ; agentIndex++) {
+        for (let agentIndex = 0; agentIndex < getRandomArbitrary(MIN_SPAWN_AGENTS_VALUE, MAX_SPAWN_AGENTS_VALUE) ; agentIndex++) {
             sourceElements.forEach((element) => {    
                 element.trigger("system", new Agent());
             });
@@ -142,6 +149,8 @@ const modelsIntervalAction = (): void => {
     })
 
     workTimePerMilliseconds += INTERVAL_VALUE;
+
+    console.log(`\n\nWORK TIME: ${workTimePerMilliseconds} ms\n`);
 
     const modelsWorkCurrentStatesInfo: TModelsLastStates = [];
 
@@ -155,25 +164,37 @@ const modelsIntervalAction = (): void => {
         modelsWorkCurrentStatesInfo.push(modelCurrentState);
     })
 
-    sendModelsLastStates(modelsWorkCurrentStatesInfo);
+    sendMessageAllClients(ServerMessageTypes.MODELS_CURRENT_STATE, modelsWorkCurrentStatesInfo);
 }
 
 export const startModels = (): void => {
+    if (isModelsStart) {
+        return;
+    }
+
     modelsWork = setInterval(modelsIntervalAction, INTERVAL_VALUE);
+
+    isModelsStop = false;
+    isModelsStart = true;
 
     console.log("\nSTART SUCCESS\n");
 }
 
 export const clearModels = (): void => {
     modelsList.forEach((model) => {
-        let networkElements = model.getNetworkElements();
+        const networkElements = model.getNetworkElements();
+        const queueElements = model.getQueueElements();
 
         networkElements.forEach((element) => {
             element.setAgentsCameCount(0);
             element.setAgentsCount(0);
             element.setAgentsLeftCount(0);
         });
-        
+
+        queueElements.forEach((element) => {
+            element.setAgentsLostCount(0);
+        });
+
         model.setNetworkElements(networkElements);
     })
 
@@ -181,6 +202,10 @@ export const clearModels = (): void => {
 }
 
 export const stopModels = (): void => {
+    if (isModelsStop) {
+        return;
+    }
+
     if (!modelsWork) {
         throw new Error("Cannot stop models, models has not been started yet");
     }
@@ -205,6 +230,9 @@ export const stopModels = (): void => {
 
 
     clearModels();
+
+    isModelsStart = false;
+    isModelsStop = true;
 
     console.log("\nSTOP SUCCESS\n");
 }

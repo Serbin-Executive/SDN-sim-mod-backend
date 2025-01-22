@@ -3,37 +3,39 @@ import EventEmitter from "events";
 import { ICurrentState, ISurroundingNetworkElements } from "../meta";
 import Agent from "../Agent";
 import { TServiceProcessList } from "./meta";
+import { randomUUID } from "crypto";
 
 class DelayElement extends NetworkElement {
     private delayValue: number;
-    private isTakeAvailable: boolean;
+    // private isTakeAvailable: boolean;
     private serviceProcessList: TServiceProcessList;
 
     constructor() {
         super();
         this.delayValue = 0;
-        this.isTakeAvailable = true;
+        // this.isTakeAvailable = true;
         this.serviceProcessList = [];
         this.takeSignal = new EventEmitter();
     }
 
-    public checkTakeAvailable(): void {
-        if (this.agentsCount >= this.capacity) {
-            this.isTakeAvailable = false;
-            return;
-        }
+    // public checkTakeAvailable(): void {
+    //     if (this.agentsCount >= this.capacity) {
+    //         this.isTakeAvailable = false;
+    //         return;
+    //     }
 
-        this.isTakeAvailable = true;
-    }
+    //     this.isTakeAvailable = true;
+    // }
 
     public trigger(initiator: NetworkElement, newAgent: Agent): boolean {
-        this.checkTakeAvailable();
+        // this.checkTakeAvailable();
 
-        if (!this.isTakeAvailable) {
+        if (this.agentsCount >= this.capacity) {
             return false;
         }
 
         this.takeAgents(initiator, newAgent);
+
         this.startDelay(newAgent);
 
         return true;
@@ -53,7 +55,7 @@ class DelayElement extends NetworkElement {
             }
 
             this.takeSignal.emit("takeAvailable");
-        }, this.delayValue)
+        }, this.delayValue);
 
         this.serviceProcessList.push(newServiceProcess);
     }

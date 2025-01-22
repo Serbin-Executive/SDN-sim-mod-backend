@@ -3,9 +3,11 @@ import { SendRequestsLinkedListNode } from "../SendRequestsLinkedListNode";
 
 export class SendRequestsLinkedList {
     private firstNodeInQueue: SendRequestsLinkedListNode | null;
+    public length: number;
 
     constructor() {
         this.firstNodeInQueue = null;
+        this.length = 0;
     }
 
     public addFunction(addingFunction: TBatchedFunction): void {
@@ -23,6 +25,8 @@ export class SendRequestsLinkedList {
         }
 
         functionState.nextNode = newFunctionInQueue;
+
+        this.length++;
     }
 
     public getFirstFunctionInQueue(): TBatchedFunction {
@@ -33,7 +37,10 @@ export class SendRequestsLinkedList {
         }
 
         const completeFunction = completeNode.currentFunction;
+
         this.firstNodeInQueue = completeNode.nextNode;
+
+        this.length--;
 
         return completeFunction;
     }
