@@ -1,5 +1,5 @@
 import Agent from "../Agent";
-import { type ISurroundingNetworkElements, type TNetworkElementInitiator } from "../meta";
+import { type ISurroundingNetworkElements, type TNetworkElementInitiator } from "../../utils/constants";
 import NetworkElement from "../NetworkElement";
 
 class SourceElement extends NetworkElement {

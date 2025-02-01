@@ -1,6 +1,6 @@
 import { SendRequestsLinkedList } from "../SendRequestsLinkedList";
 import NetworkElement from "../NetworkElement";
-import { ISurroundingNetworkElements, TNetworkElementAgentsLostCount } from "../meta";
+import { ISurroundingNetworkElements, TNetworkElementAgentsLostCount } from "../../utils/constants";
 import Agent from "../Agent";
 
 class QueueElement extends NetworkElement {
@@ -45,6 +45,12 @@ class QueueElement extends NetworkElement {
             initiator.setAgentsLeftCount(initiatorAgentsLeftCount + 1);
 
             this.agentsLostCount += 1;
+
+            const lostTime = new Date().getUTCMilliseconds();
+
+            newAgent.setLeftTime(lostTime);
+            newAgent.setIsLeftModel(true);
+            newAgent.setIsLost(true);
 
             return;
         }
@@ -104,6 +110,10 @@ class QueueElement extends NetworkElement {
 
     public setAgentsLostCount(agentsLostCount: TNetworkElementAgentsLostCount): void {
         this.agentsLostCount = agentsLostCount;
+    }
+
+    public stop(): void {
+        this.sendRequestsQueue = new SendRequestsLinkedList();
     }
 }
 

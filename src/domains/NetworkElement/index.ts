@@ -12,7 +12,7 @@ import {
     type TNetworkElementInitiator,
     type TTakeSignal,
     type TAgentsList,
-} from "../meta";
+} from "../../utils/constants";
 import { randomUUID } from "crypto";
 
 abstract class NetworkElement {

@@ -1,239 +1,212 @@
 import Agent from "../../domains/Agent";
 import DelayElement from "../../domains/DelayElement";
-import { ICurrentState, TPreviousNetworkElements } from "../../domains/meta";
 import NetworkElement from "../../domains/NetworkElement";
 import QueueElement from "../../domains/QueueElement";
 import SinkElement from "../../domains/SinkElement";
-import SourceElement from "../../domains/SourceElement"
-import { SendRequestsLinkedList } from "../../domains/SendRequestsLinkedList";
+import SourceElement from "../../domains/SourceElement";
+import Model from "../../domains/Model";
+// import Board from "../../domains/Board";
 import { sendMessageAllClients } from "../WebSocketController";
-import { IModelLastState, INetworElementState, IStatisticField, TModelsLastStates, TModelsWork, getRandomArbitrary } from "./meta";
-import { Model } from "../../domains/Model";
-import { ServerMessageTypes } from "../WebSocketController/meta";
+import { MODELS_COUNT_VALUE, QUEUE_CAPACITY, DELAY_CAPACITY, DELAY_VALUE, MIN_SPAWN_AGENTS_VALUE, MAX_SPAWN_AGENTS_VALUE, WORK_INTERVAL_VALUE, STATISTIC_INTERVAL_VALUE, addElementsInList, getPreviousElementsList, settingNextElementsInSequence, INetworElementState, ICurrentState, IStateInfoField, getRandomArbitrary, combineArray, IModelStateInfo, TModelsLastStateInfo, ServerMessageTypes, TAgentsStatesInfo, TModelStatesInfo} from "../../utils/constants";
 
-const modelsList: Model[] = [];
+// export const board = new Board();
 
-const MODELS_COUNT_VALUE: number = 1;
+// export const createModels = (): void => {
+//     board.clearModels();
 
-const MIN_SPAWN_AGENTS_VALUE: number = 5;
-const MAX_SPAWN_AGENTS_VALUE: number = 10;
-const INTERVAL_VALUE: number = 2000;
-const QUEUE_CAPACITY: number = 10;
-const DELAY_CAPACITY: number = 5;
-const DELAY_VALUE: number = 1000;
+//     for (let index = 0; index < MODELS_COUNT_VALUE; index++) {
+//         const newModel = new Model();
 
-let workTimePerMilliseconds: number = 0 - INTERVAL_VALUE;
-let modelsWork: TModelsWork = null;
-export let isModelsStart: boolean = false;
-export let isModelsStop: boolean = true;
+//         const sourceElements: SourceElement[] = [];
+//         const networkElements: NetworkElement[] = [];
+//         const queueElements: QueueElement[] = [];
+//         const delayElements: DelayElement[] = [];
 
-const addElementsInList = (list: NetworkElement[], ...elements: NetworkElement[]): void => {
-    elements.forEach((element) => {
-        list.push(element);
-    })
-}
+//         const sourceElement = new SourceElement();
+//         const queueElement = new QueueElement();
+//         const delayElement = new DelayElement();
+//         const sinkElement = new SinkElement();
 
-const getPreviousElementsList = (...elements: NetworkElement[]): TPreviousNetworkElements => {
-    const previousElements: TPreviousNetworkElements = new Map<string, NetworkElement>;
+//         addElementsInList(sourceElements, sourceElement);
+//         addElementsInList(networkElements, sourceElement, queueElement, delayElement, sinkElement);
+//         addElementsInList(queueElements, queueElement);
+//         addElementsInList(delayElements, delayElement);
 
-    elements.forEach((element) => {
-        previousElements.set(element.getId(), element);
-    })
+//         sourceElement.setPreviousElements(getPreviousElementsList());
+//         queueElement.setPreviousElements(getPreviousElementsList(sourceElement));
+//         delayElement.setPreviousElements(getPreviousElementsList(queueElement));
+//         sinkElement.setPreviousElements(getPreviousElementsList(delayElement));
 
-    return previousElements;
-}
+//         settingNextElementsInSequence(networkElements);
 
-const settingNextElementsInSequence = (elements: NetworkElement[]): void => {
-    const lastElementIndex = elements.length - 1;
+//         queueElement.setCapacity(QUEUE_CAPACITY);
+//         delayElement.setCapacity(DELAY_CAPACITY);
 
-    elements.forEach((element, index) => {
-        if (index == lastElementIndex) {
-            return;
-        }
+//         queueElement.sendListenerInit();
+//         delayElement.setDelayValue(DELAY_VALUE);
 
-        element.setNextElement(elements[index + 1]);
-    })
-}
+//         newModel.setSourceElements(sourceElements);
+//         newModel.setNetworkElements(networkElements);
+//         newModel.setQueueElements(queueElements);
+//         newModel.setDelayElements(delayElements);
 
-export const createModels = (): void => {
-    modelsList.splice(0, modelsList.length);
+//         board.addModelToBoard(newModel);
 
-    for (let index = 0; index < MODELS_COUNT_VALUE; index++) {
-        const newModel = new Model();
+//         console.log("\nCREATE SUCCESS\n");
+//     }
 
-        const sourceElements: SourceElement[] = [];
-        const networkElements: NetworkElement[] = [];
-        const queueElements: QueueElement[] = [];
-        const delayElements: DelayElement[] = [];
+// }
 
-        const sourceElement = new SourceElement();
-        const queueElement = new QueueElement();
-        const delayElement = new DelayElement();
-        const sinkElement = new SinkElement();
+// const modelsIntervalAction = (): void => {
+//     const modelsList = board.getModelsList();
+//     let workTime = board.getWorkTime();
+//     const modelsStatistic = board.getStatistic();
+//     const allModelsStatesInfo = modelsStatistic.getAllModelsStatesInfo();
+
+//     modelsList.forEach((model) => {
+//         model.spawnAgents();
+//     }
+//     );
+
+//     workTime += WORK_INTERVAL_VALUE;
+//     board.setWorkTime(workTime);
+
+//     console.log(`\n\nWORK TIME: ${workTime} ms\n`);
+
+
+//     modelsList.forEach((model, modelIndex) => {
+//         let networkElements = model.getNetworkElements();
+//         let modelCurrentStateInfo = model.getModelStateInfo(workTime, networkElements);
+
+//         if (allModelsStatesInfo.length < modelsList.length) {
+//             const modelsStatesInfoElement: TModelStatesInfo = [];
+//             modelsStatesInfoElement.push(modelCurrentStateInfo);
+
+//             allModelsStatesInfo.push(modelsStatesInfoElement);
+
+//             return;
+//         }
+
+//         console.log("\n\n\n\nMODELS ACTION INTERVAL CHECK PREVIOUS PUSH:\n")
+//         console.log("ALL MODELS STATES: \n");
+//         console.log(modelsStatistic.getAllModelsStatesInfo());
     
-        addElementsInList(sourceElements, sourceElement);
-        addElementsInList(networkElements, sourceElement, queueElement, delayElement, sinkElement);
-        addElementsInList(queueElements, queueElement);
-        addElementsInList(delayElements, delayElement);
+//         console.log("\n\n\n\nSENT MODELS STATES: \n");
+//         console.log(modelsStatistic.getSentModelsStatesInfo());
+
+//         allModelsStatesInfo[modelIndex].push(modelCurrentStateInfo);
+
+//         console.log("\n\n\n\nMODELS ACTION INTERVAL CHECK AFTER PUSH:\n")
+//         console.log("ALL MODELS STATES: \n");
+//         console.log(modelsStatistic.getAllModelsStatesInfo());
     
-        sourceElement.setPreviousElements(getPreviousElementsList());
-        queueElement.setPreviousElements(getPreviousElementsList(sourceElement));
-        delayElement.setPreviousElements(getPreviousElementsList(queueElement));
-        sinkElement.setPreviousElements(getPreviousElementsList(delayElement));
+//         console.log("\n\n\n\nSENT MODELS STATES: \n");
+//         console.log(modelsStatistic.getSentModelsStatesInfo());
+//     });
+
+//     modelsStatistic.setAllModelsStatesInfo(allModelsStatesInfo);
+// }
+
+// const statisticIntervalAction = (): void => {
+//     const modelsStatistic = board.getStatistic();
+
+//     const needSendModelsStatesInfo = modelsStatistic.getNeedSendModelsStatesInfo();
+//     const needSendCompletedAgentsStatesInfo = modelsStatistic.getNeedSendCompletedAgentsStatesInfo();
     
-        settingNextElementsInSequence(networkElements);
-    
-        queueElement.setCapacity(QUEUE_CAPACITY);
-        delayElement.setCapacity(DELAY_CAPACITY);
+//     // console.log("\n\n\n\nSTATISTIC INTERVAL CHECK:\n")
+//     // console.log("ALL MODELS STATES: \n");
+//     // console.log(modelsStatistic.getAllModelsStatesInfo());
 
-        queueElement.sendListenerInit();
-        delayElement.setDelayValue(DELAY_VALUE);
+//     // console.log("\n\n\n\nSENT MODELS STATES: \n");
+//     // console.log(modelsStatistic.getSentModelsStatesInfo());
 
-        newModel.setSourceElements(sourceElements);
-        newModel.setNetworkElements(networkElements);
-        newModel.setQueueElements(queueElements);
-        newModel.setDelayElements(delayElements);
-    
-        modelsList.push(newModel);
-        console.log("\nCREATE SUCCESS\n");
-    }
+//     modelsStatistic.updateSentModelsStatesInfo(needSendModelsStatesInfo);
+//     modelsStatistic.updateSentCompletedAgentsStatesInfo(needSendCompletedAgentsStatesInfo);
 
-}
+//     // console.log("\n\n\n\nUPDATED SENT MODELS STATES: \n");
+//     // console.log(modelsStatistic.getSentModelsStatesInfo());
 
-export const getModelWorkCurrentState = (modelElements: NetworkElement[]): IModelLastState => {
-    const currentState: IModelLastState = {
-        time: String(workTimePerMilliseconds),
-        networkElementsStatesList: [],
-    };
+//     // sendMessageAllClients(ServerMessageTypes.MODELS_STATES, needSendModelsStatesInfo);
+//     // sendMessageAllClients(ServerMessageTypes.SERVICE_COMPLETED_AGENTS, needSendCompletedAgentsStatesInfo);
+// }
 
-    modelElements.forEach((modelElement) => {
-        const currentNetworkElementState: INetworElementState = {
-            id: modelElement.getId(),
-            type: modelElement.constructor.name,
-            statisticFields: [],
-        };
+// export const startModels = (): void => {
+//     const isModelsStart = board.getIsModelStart();
 
-        const modelElementStatistic: ICurrentState = modelElement.getCurrentState();
-        
-        console.log(`\n[${modelElement.constructor.name}#${modelElement.getId()}]`);
+//     if (isModelsStart) {
+//         return;
+//     }
 
-        const statisticFieldsArray = Object.entries(modelElementStatistic).map(([fieldName, fieldValue]) => {
-            const currentStatisticField: IStatisticField = {
-                fieldName: fieldName,
-                fieldValue: String(fieldValue),
-            };
+//     board.setModelsWorkTimer(setInterval(board.modelsIntervalAction, WORK_INTERVAL_VALUE));
+//     board.setSendModelsStatisticTimer(setInterval(statisticIntervalAction, STATISTIC_INTERVAL_VALUE));
 
-            currentNetworkElementState.statisticFields.push(currentStatisticField);
+//     board.setIsModelsStop(false);
+//     board.setIsModelsStart(true);
 
-            return { Field: fieldName, Value: fieldValue };
-        });
+//     console.log("\nSTART SUCCESS\n");
+// }
 
-        console.table(statisticFieldsArray);
+// export const clearModelsData = (): void => {
+//     const modelsList = board.getModelsList();
 
-        currentState.networkElementsStatesList.push(currentNetworkElementState);
-    });
+//     modelsList.forEach((model) => {
+//         const networkElements = model.getNetworkElements();
+//         const queueElements = model.getQueueElements();
 
-    return currentState;
-}
+//         networkElements.forEach((element) => {
+//             element.setAgentsCameCount(0);
+//             element.setAgentsCount(0);
+//             element.setAgentsLeftCount(0);
+//         });
 
+//         queueElements.forEach((element) => {
+//             element.setAgentsLostCount(0);
+//         });
 
-const modelsIntervalAction = (): void => {
-    modelsList.forEach((model) => {
-        const sourceElements = model.getSourceElements();
+//         model.setNetworkElements(networkElements);
+//     });
 
-        // for (let agentIndex = 0; agentIndex < SPAWN_AGENTS_VALUE; agentIndex++) {
-        for (let agentIndex = 0; agentIndex < getRandomArbitrary(MIN_SPAWN_AGENTS_VALUE, MAX_SPAWN_AGENTS_VALUE) ; agentIndex++) {
-            sourceElements.forEach((element) => {    
-                element.trigger("system", new Agent());
-            });
-        }
-    })
+//     board.setModelsList(modelsList);
+//     board.setWorkTime(0);
+// }
 
-    workTimePerMilliseconds += INTERVAL_VALUE;
+// export const stopModels = (): void => {
+//     const isModelsStop = board.getIsModelStop();
+//     const modelsWorkTimer = board.getModelsWorkTimer();
+//     const sendModelsStatisticTimer = board.getSendModelsStatisticTimer();
+//     const modelsList = board.getModelsList();
 
-    console.log(`\n\nWORK TIME: ${workTimePerMilliseconds} ms\n`);
+//     if (isModelsStop) {
+//         return;
+//     }
 
-    const modelsWorkCurrentStatesInfo: TModelsLastStates = [];
+//     if (!modelsWorkTimer || !sendModelsStatisticTimer) {
+//         throw new Error("Cannot stop models, models has not been started yet");
+//     }
 
-    modelsList.forEach((model) => {
-        let networkElements = model.getNetworkElements();
+//     clearInterval(modelsWorkTimer);
+//     clearInterval(sendModelsStatisticTimer);
 
-        console.log(`\n\n\nModel ID: ${model.getID()}\n\n`);
+//     modelsList.forEach((model) => {
+//         let delayElements = model.getDelayElements();
+//         let queueElements = model.getQueueElements();
 
-        let modelCurrentState = getModelWorkCurrentState(networkElements);
+//         delayElements.forEach((element) => {
+//             element.stop();
+//         })
 
-        modelsWorkCurrentStatesInfo.push(modelCurrentState);
-    })
+//         queueElements.forEach((element) => {
+//             element.stop();
+//         });
 
-    sendMessageAllClients(ServerMessageTypes.MODELS_CURRENT_STATE, modelsWorkCurrentStatesInfo);
-}
+//         model.setDelayElements(delayElements);
+//         model.setQueueElements(queueElements);
+//     })
 
-export const startModels = (): void => {
-    if (isModelsStart) {
-        return;
-    }
+//     clearModelsData();
 
-    modelsWork = setInterval(modelsIntervalAction, INTERVAL_VALUE);
+//     board.setIsModelsStart(false);
+//     board.setIsModelsStop(true);
 
-    isModelsStop = false;
-    isModelsStart = true;
-
-    console.log("\nSTART SUCCESS\n");
-}
-
-export const clearModels = (): void => {
-    modelsList.forEach((model) => {
-        const networkElements = model.getNetworkElements();
-        const queueElements = model.getQueueElements();
-
-        networkElements.forEach((element) => {
-            element.setAgentsCameCount(0);
-            element.setAgentsCount(0);
-            element.setAgentsLeftCount(0);
-        });
-
-        queueElements.forEach((element) => {
-            element.setAgentsLostCount(0);
-        });
-
-        model.setNetworkElements(networkElements);
-    })
-
-    workTimePerMilliseconds = 0;
-}
-
-export const stopModels = (): void => {
-    if (isModelsStop) {
-        return;
-    }
-
-    if (!modelsWork) {
-        throw new Error("Cannot stop models, models has not been started yet");
-    }
-
-    clearInterval(modelsWork);
-
-    modelsList.forEach((model) => {
-        let delayElements = model.getDelayElements();
-        let queueElements = model.getQueueElements();
-
-        delayElements.forEach((element) => {
-            element.stop();
-        })
-    
-        queueElements.forEach((element) => {
-            element.setSendRequestsQueue(new SendRequestsLinkedList);
-        });
-
-        model.setDelayElements(delayElements);
-        model.setQueueElements(queueElements);
-    })
-
-
-    clearModels();
-
-    isModelsStart = false;
-    isModelsStop = true;
-
-    console.log("\nSTOP SUCCESS\n");
-}
+//     console.log("\nSTOP SUCCESS\n");
+// }

@@ -1,8 +1,10 @@
 import NetworkElement from "../NetworkElement";
 import EventEmitter from "events";
-import { ICurrentState, ISurroundingNetworkElements } from "../meta";
 import Agent from "../Agent";
-import { TServiceProcessList } from "./meta";
+import { TServiceProcessList } from "../../utils/constants";
+import { ISurroundingNetworkElements } from "../../utils/constants";
+import { ICurrentState } from "../../utils/constants";
+
 
 class DelayElement extends NetworkElement {
     private delayValue: number;
