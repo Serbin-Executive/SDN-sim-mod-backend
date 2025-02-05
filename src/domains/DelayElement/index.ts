@@ -45,6 +45,7 @@ class DelayElement extends NetworkElement {
                 throw new Error("Triggered startDelay() into invalid NetworkElement");
             }
 
+            this.removeAgentFromList(newAgent);
             this.nextElement.trigger(this, newAgent);
 
             if (!this.takeSignal) {

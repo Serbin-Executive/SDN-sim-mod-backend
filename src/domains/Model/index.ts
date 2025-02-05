@@ -2,7 +2,9 @@ import SourceElement from "../SourceElement";
 import NetworkElement from "../NetworkElement";
 import QueueElement from "../QueueElement";
 import DelayElement from "../DelayElement";
+import SinkElement from "../SinkElement";
 import Agent from "../Agent";
+import { startDate } from "../..";
 import { randomUUID } from "crypto";
 import { IModelStateInfo, INetworElementState, ICurrentState, IStateInfoField, TWorkTime, getRandomArbitrary, MIN_SPAWN_AGENTS_VALUE, MAX_SPAWN_AGENTS_VALUE, TModelID, DEFAULT_MODEL_STATISTIC, IModelStatistic, TModelStatesInfo, TObjectsStatesInfo, TStatesInfo, TStateInfo, TAgentsList } from "../../utils/constants";
 
@@ -12,6 +14,7 @@ class Model {
     private networkElements: NetworkElement[];
     private queueElements: QueueElement[];
     private delayElements: DelayElement[];
+    private sinkElements: SinkElement[];
     private statistic: IModelStatistic;
 
     constructor() {
@@ -20,6 +23,7 @@ class Model {
         this.networkElements = [];
         this.queueElements = [];
         this.delayElements = [];
+        this.sinkElements = [];
         this.statistic = DEFAULT_MODEL_STATISTIC;
     }
 
@@ -43,12 +47,12 @@ class Model {
         return this.delayElements;
     }
 
-    public getStatistic(): IModelStatistic {
-        return this.statistic;
+    public getSinkElements(): SinkElement[] {
+        return this.sinkElements;
     }
 
-    private getAgentState = (agent: Agent): ICurrentState => {
-        return agent.getCurrentState();
+    public getStatistic(): IModelStatistic {
+        return this.statistic;
     }
 
     private getStateInfo = (state: ICurrentState): TStateInfo => {
@@ -65,24 +69,19 @@ class Model {
         return statesListInfo;
     }
 
-    public updateServiceCompletedAgentsList(agent: Agent): void {
-        this.statistic.serviceCompletedAgentsList.push(agent);
-    }
-
-    public spawnAgents(allTimeAgentsCount: number): void {
+    public spawnAgents(): void {
         const sourceElements = this.sourceElements;
         // for (let agentIndex = 0; agentIndex < SPAWN_AGENTS_VALUE; agentIndex++) {
         for (let agentIndex = 0; agentIndex < getRandomArbitrary(MIN_SPAWN_AGENTS_VALUE, MAX_SPAWN_AGENTS_VALUE); agentIndex++) {
             sourceElements.forEach((element) => {
                 const agent = new Agent();
 
-                const agentId =  allTimeAgentsCount + 1;
-                allTimeAgentsCount++;
+                const agentId =  this.statistic.allAgentsCount + 1;
+                this.statistic.allAgentsCount++;
 
-                const agentCameTime = new Date().getUTCMilliseconds();
+                const agentCameTime = (new Date()).getTime() - startDate.getTime();
 
                 agent.setId(agentId);
-                agent.setModelId(this.ID);
                 agent.setCameTime(agentCameTime);
 
                 element.trigger("system", agent);
@@ -98,7 +97,6 @@ class Model {
             time: String(workTime),
             networkElementsStatesList: [],
         };
-
 
         networkElements.forEach((element) => {
             const currentNetworkElementState: INetworElementState = {
@@ -130,8 +128,16 @@ class Model {
         return currentState;
     }
 
-    public getServiceCompletedAgentsStatesInfo(): TStatesInfo {
-        const serviceCompletedAgentsList = this.statistic.serviceCompletedAgentsList;
+    public getNeedSendServiceCompletedAgentsStatesInfo(): TStatesInfo {
+        const serviceCompletedAgentsList: TAgentsList = [];
+
+        this.sinkElements.forEach((sinkElement) => {
+            const elementAgentList: TAgentsList = sinkElement.getAgentsList();
+
+            elementAgentList.forEach((agent) => {
+                serviceCompletedAgentsList.push(agent);
+            });
+        });
         
         const serviceCompletedAgentsStatesInfo: TStatesInfo = serviceCompletedAgentsList.map((agent) => {
             const agentState = agent.getCurrentState();
@@ -158,6 +164,10 @@ class Model {
         this.delayElements = delayElements;
     }
 
+    public setSinkElements(sinkElements: SinkElement[]): void {
+        this.sinkElements = sinkElements;
+    }
+
     public setStatistic(statistic: IModelStatistic): void {
         this.statistic = statistic;
     }
@@ -169,10 +179,29 @@ class Model {
         this.queueElements.forEach((element) => {
             element.stop();
         });
+
+        this.clearAgents();
     }
 
     public clearStatistic(): void {
         this.statistic = DEFAULT_MODEL_STATISTIC;
+    }
+
+    public clearIntervalStatistic(): void {
+        this.sourceElements.forEach((sourceElement) => {
+            sourceElement.clearAgentsList();
+        })
+    }
+
+    public updateStatistic(ping: number, jitter: number): void {
+        this.statistic.ping = ping;
+        this.statistic.jitter = jitter;
+    }
+
+    public clearSendingStatistic(): void {
+        this.sinkElements.forEach((sinkElement) => {
+            sinkElement.clearAgentsList();
+        });
     }
 
     public clearAgents(): void {

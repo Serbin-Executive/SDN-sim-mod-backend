@@ -104,11 +104,15 @@ export const DEFAULT_MODELS_STATISTIC: IModelsStatistic = {
 }
 
 export interface IModelStatistic {
-    serviceCompletedAgentsList: TAgentsList;
+    ping: number;
+    jitter: number;
+    allAgentsCount: number;
 }
 
 export const DEFAULT_MODEL_STATISTIC: IModelStatistic = {
-    serviceCompletedAgentsList: [],
+    ping: 0,
+    jitter: 0,
+    allAgentsCount: 0,
 }
 
 export interface IBoardStatistic {
@@ -147,7 +151,6 @@ export const enum ServerMessageTypes {
     MESSAGE = "message",
     MODELS_WORKING_COMMANDS = "models working commands",
     MODELS_STATES = "models states",
-    SERVICE_COMPLETED_AGENTS = "service completed agents",
     MODELS_ACTIONS_STATES = "models actions states",
     CLEAR_CHARTS = "clear charts",
 }
@@ -160,7 +163,7 @@ export const enum ServerInfoMessageTexts {
 }
 
 export interface IActionConfig {
-    modelActionFunction: () => void;
+    modelActionFunction: any;
     clientSendActionFunctions: any[];
     allClientsSendActionFunctions: any[];
     infoMessage: string;

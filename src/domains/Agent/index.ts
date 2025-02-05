@@ -2,7 +2,6 @@ import { TAgentId, TAgentTime, TModelID } from "../../utils/constants";
 
 class Agent {
     private id: TAgentId;
-    private modelId: TModelID; 
     private cameTime: TAgentTime;
     private leftTime: TAgentTime;
     private isLeftModel: boolean; 
@@ -10,7 +9,6 @@ class Agent {
 
     constructor() {
         this.id = 0;
-        this.modelId = "";
         this.cameTime = 0;
         this.leftTime = 0;
         this.isLeftModel = false;
@@ -19,10 +17,6 @@ class Agent {
 
     public getId(): TAgentId {
         return this.id;
-    }
-
-    public getModelId(): TModelID {
-        return this.modelId;
     }
 
     public getCameTime(): TAgentTime {
@@ -51,10 +45,6 @@ class Agent {
 
     public setId(id: TAgentId): void {
         this.id = id;
-    }
-
-    public setModelId(modelId: TModelID): void {
-        this.modelId = modelId;
     }
 
     public setCameTime(cameTime: TAgentTime): void {

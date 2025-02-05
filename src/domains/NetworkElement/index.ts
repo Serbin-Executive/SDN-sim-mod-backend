@@ -81,6 +81,10 @@ abstract class NetworkElement {
         return this.id;
     }
 
+    public getAgentsList(): TAgentsList {
+        return this.agentsList;
+    }
+
     public getCapacity(): TNetworkElementCapacity {
         if (!this.capacity) {
             throw new Error(
@@ -123,6 +127,10 @@ abstract class NetworkElement {
         return this.nextElement;
     }
 
+    public setAgentsList(agentsList: TAgentsList): void {
+        this.agentsList = agentsList;
+    }
+
     public setCapacity(capacity: TNetworkElementCapacity): void {
         this.capacity = capacity;
     }
@@ -147,6 +155,10 @@ abstract class NetworkElement {
 
     public setNextElement(nextElement: TNextNetworkElement): void {
         this.nextElement = nextElement;
+    }
+
+    public removeAgentFromList(removedAgent: Agent): void {
+        this.agentsList = this.agentsList.filter((agent) => agent !== removedAgent);
     }
 }
 

@@ -17,6 +17,8 @@ class SourceElement extends NetworkElement {
         this.setAgentsCount(this.agentsCount + 1);
         this.setAgentsCameCount(this.agentsCameCount + 1);
 
+        this.agentsList.push(newAgent);
+
         this.nextElement.trigger(this, newAgent);
     }
 
@@ -33,7 +35,12 @@ class SourceElement extends NetworkElement {
     public getCurrentState() {
         return {
             agentsLeftCount: this.agentsLeftCount,
+            agentsCountInLastInterval: this.agentsList.length,
         }
+    }
+
+    public clearAgentsList(): void {
+        this.agentsList = [];
     }
 }
 

@@ -6,7 +6,8 @@ import QueueElement from "../QueueElement";
 import DelayElement from "../DelayElement";
 import SinkElement from "../SinkElement";
 import { startDate } from "../..";
-import { TModelsList, TWorkTime, TModelsInterval, TModelID, TModelsStatesInfo, TModelStatesInfo, STATISTIC_INTERVAL_VALUE, TObjectsStatesInfo, IBoardStatistic, DEFAULT_BOARD_STATISTIC, TStatesInfo, MODELS_COUNT_VALUE, addElementsInList, getPreviousElementsList, settingNextElementsInSequence, QUEUE_CAPACITY, DELAY_CAPACITY, DELAY_VALUE, WORK_INTERVAL_VALUE, TModelsLastStateInfo, IModelStateInfo, IModelsStatistic, DEFAULT_MODELS_STATISTIC, getRandomArbitrary, MAX_SPAWN_AGENTS_VALUE, MIN_SPAWN_AGENTS_VALUE } from "../../utils/constants";
+import { TModelsList, TWorkTime, TModelsInterval, TModelID, TModelsStatesInfo, TModelStatesInfo, STATISTIC_INTERVAL_VALUE, TObjectsStatesInfo, IBoardStatistic, DEFAULT_BOARD_STATISTIC, TStatesInfo, MODELS_COUNT_VALUE, addElementsInList, getPreviousElementsList, settingNextElementsInSequence, QUEUE_CAPACITY, DELAY_CAPACITY, DELAY_VALUE, WORK_INTERVAL_VALUE, TModelsLastStateInfo, IModelStateInfo, IModelsStatistic, DEFAULT_MODELS_STATISTIC, getRandomArbitrary, MAX_SPAWN_AGENTS_VALUE, MIN_SPAWN_AGENTS_VALUE, ServerMessageTypes } from "../../utils/constants";
+import { sendMessageAllClients } from "../../controllers/WebSocketController";
 
 class Board {
     private modelsList: TModelsList;
@@ -15,16 +16,14 @@ class Board {
     private sendModelsStatisticTimer: TModelsInterval;
     private isModelsStart: boolean;
     private isModelsStop: boolean;
-    private statistic: IModelsStatistic;
 
     constructor() {
         this.modelsList = [];
-        this.workTime = 0 - WORK_INTERVAL_VALUE;
+        this.workTime = 0;
         this.modelsWorkTimer = null;
         this.sendModelsStatisticTimer = null;
         this.isModelsStart = false;
         this.isModelsStop = true;
-        this.statistic = DEFAULT_MODELS_STATISTIC;
     }
 
     public getModelsList(): TModelsList {
@@ -61,10 +60,6 @@ class Board {
         return this.isModelsStop;
     }
 
-    public getStatistic(): IModelsStatistic {
-        return this.statistic;
-    }
-
     public getNeedSendModelsStatesInfo(modelsList: TModelsList): TModelsLastStateInfo {
         const needSendModelsStatesInfo: TModelsLastStateInfo = [];
 
@@ -81,7 +76,7 @@ class Board {
         const needSendModelsAgentsStatesInfo: TObjectsStatesInfo = [];
 
         modelsList.forEach((model) => {
-            const needSendModelAgentsStatesInfo: TStatesInfo = model.getServiceCompletedAgentsStatesInfo();
+            const needSendModelAgentsStatesInfo: TStatesInfo = model.getNeedSendServiceCompletedAgentsStatesInfo();
 
             needSendModelsAgentsStatesInfo.push(needSendModelAgentsStatesInfo);
         });
@@ -113,71 +108,74 @@ class Board {
         this.isModelsStop = isModelsStop;
     }
 
-    public setStatistic(modelsStatistic: IModelsStatistic) {
-        this.statistic = modelsStatistic;
-    }
-
     public addModelToBoard(model: Model): void {
         this.modelsList.push(model)
+    }
+
+    public clearIntervalStatistic(): void {
+        this.modelsList.forEach((model) => {
+            model.clearIntervalStatistic();
+        })
     }
 
     public clearSendingStatistic(): void {
         const modelsList = this.modelsList;
 
         modelsList.forEach((model) => {
-            model.clearStatistic();
+            model.clearSendingStatistic();
         })
     }
 
     public modelsIntervalAction(): void {
-        const modelsList = this.modelsList;
+        this.clearIntervalStatistic();
 
-        // modelsList.forEach((model) => {
-        //     model.spawnAgents(allTimeAgentsCount);
-        // });
-
-        modelsList.forEach((model) => {
-            const sourceElements = model.getSourceElements();
-            // for (let agentIndex = 0; agentIndex < SPAWN_AGENTS_VALUE; agentIndex++) {
-            for (let agentIndex = 0; agentIndex < getRandomArbitrary(MIN_SPAWN_AGENTS_VALUE, MAX_SPAWN_AGENTS_VALUE); agentIndex++) {
-                sourceElements.forEach((element) => {
-                    const agent = new Agent();
-
-                    const agentId = this.statistic.allTimeServiceCompletedAgentsCount + 1;
-                    this.statistic.allTimeServiceCompletedAgentsCount++;
-
-                    const startTime = startDate.getTime();
-                    const agentCameTime = (new Date()).getTime();
-
-                    agent.setId(agentId);
-                    agent.setModelId(model.getID());
-                    agent.setCameTime(agentCameTime - startTime);
-
-                    element.trigger("system", agent);
-                });
-            }
+        this.modelsList.forEach((model) => {
+            model.spawnAgents();
         })
 
         this.workTime += WORK_INTERVAL_VALUE;
+
         console.log(`\n\nWORK TIME: ${this.workTime} ms\n`);
     }
 
     public statisticIntervalAction(): void {
-        const modelsList = this.modelsList;
+        const needSendModelsStatesInfo = this.getNeedSendModelsStatesInfo(this.modelsList);
+        // const needSendModelsAgentsStatesInfo = this.getNeedSendModelsAgentsStatesInfo(modelsList);
 
-        const needSendModelsStatesInfo = this.getNeedSendModelsStatesInfo(modelsList);
-        const needSendModelsAgentsStatesInfo = this.getNeedSendModelsAgentsStatesInfo(modelsList);
+        sendMessageAllClients(ServerMessageTypes.MODELS_STATES, needSendModelsStatesInfo);
+        //send agents
+        this.modelsList.forEach((model) => {
+            const sinkElements = model.getSinkElements();
 
-        //SEND TO WEBSOCKET
+            let pingSum: number = 0;
+            let jitterSum: number = 0;
 
-        console.log("Agents all count: ", this.statistic.allTimeServiceCompletedAgentsCount);
+            sinkElements.forEach((sinkElement) => {
+                const agentsList = sinkElement.getAgentsList();
 
-        // this.modelsList.forEach((model, index) => {
-        //     console.log("\nModel ID: ", model.getID());
-        //     console.log(model.getStatistic().serviceCompletedAgentsList, "\n");
-        // })
+                console.log(sinkElement.getId())
+                console.log(sinkElement.getAgentsList());
 
-        // console.log(JSON.stringify(this.modelsList));
+                pingSum += agentsList.reduce((pingSum, agent) => pingSum + (agent.getLeftTime() - agent.getCameTime()), 0);
+
+                agentsList.forEach((agent, index) => {
+                    if (!index) {
+                        return 0;
+                    }
+
+                    jitterSum += agent.getLeftTime() - agentsList[index - 1].getLeftTime();
+                })
+            });
+
+            const agentsCount: number = sinkElements.reduce((agentsCount, sinkElement) => agentsCount + sinkElement.getAgentsList().length, 0);
+
+            const averagePing: number = pingSum / agentsCount;
+            const averageJitter: number = jitterSum / agentsCount;
+
+            model.updateStatistic(averagePing, averageJitter); 
+
+            console.log("Model statistic: ", model.getStatistic());
+        });
 
         this.clearSendingStatistic();
     }
@@ -192,6 +190,7 @@ class Board {
             const networkElements: NetworkElement[] = [];
             const queueElements: QueueElement[] = [];
             const delayElements: DelayElement[] = [];
+            const sinkElements: SinkElement[] = [];
 
             const sourceElement = new SourceElement();
             const queueElement = new QueueElement();
@@ -202,6 +201,7 @@ class Board {
             addElementsInList(networkElements, sourceElement, queueElement, delayElement, sinkElement);
             addElementsInList(queueElements, queueElement);
             addElementsInList(delayElements, delayElement);
+            addElementsInList(sinkElements, sinkElement);
 
             sourceElement.setPreviousElements(getPreviousElementsList());
             queueElement.setPreviousElements(getPreviousElementsList(sourceElement));
@@ -220,6 +220,7 @@ class Board {
             newModel.setNetworkElements(networkElements);
             newModel.setQueueElements(queueElements);
             newModel.setDelayElements(delayElements);
+            newModel.setSinkElements(sinkElements);
 
             this.addModelToBoard(newModel);
 
@@ -227,29 +228,27 @@ class Board {
         }
     }
 
-    public clearStatistic(): void {
-        this.statistic.allTimeServiceCompletedAgentsCount = 0;
-
+    public clearStartedModelsStatistic(): void {
         this.modelsList.forEach((model) => {
-            model.clearStatistic();
+            model.clearSendingStatistic();
         });
     }
 
-    public clearAgentsInModels(): void {
-        this.modelsList.forEach((model) => {
-            model.clearAgents();
-        });
+    // public clearAgentsInStoppedModels(): void {
+    //     this.modelsList.forEach((model) => {
+    //         model.clearAgents();
+    //     });
 
-        this.setWorkTime(0);
-    }
+    //     this.setWorkTime(0);
+    // }
 
     public startModels(): void {
-        this.clearStatistic();
+        this.clearStartedModelsStatistic();
 
         if (this.isModelsStart) {
             return;
         }
-
+    
         this.modelsWorkTimer = setInterval(() => this.modelsIntervalAction(), WORK_INTERVAL_VALUE);
         this.sendModelsStatisticTimer = setInterval(() => this.statisticIntervalAction(), STATISTIC_INTERVAL_VALUE);
 
@@ -275,7 +274,8 @@ class Board {
             model.stop();
         })
 
-        this.clearAgentsInModels();
+        this.workTime = 0;
+        // this.clearAgentsInStoppedModels();
 
         this.isModelsStart = false;
         this.isModelsStop = true;

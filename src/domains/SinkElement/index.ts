@@ -2,7 +2,7 @@ import Agent from "../Agent";
 import Model from "../Model";
 import NetworkElement from "../NetworkElement";
 import { ISurroundingNetworkElements } from "../../utils/constants";
-import { board, startDate } from "../..";
+import { startDate } from "../..";
 
 class SinkElement extends NetworkElement {
     constructor() {
@@ -12,23 +12,22 @@ class SinkElement extends NetworkElement {
         this.agentsLeftCount = 0;
     }
 
-    protected sinkAgents(sinkAgent: Agent): void {
+    protected sinkAgent(newAgent: Agent): void {
         this.agentsCount = 0;
-        this.agentsList = [];
 
         const startTime = startDate.getTime();
         const leftTime = (new Date()).getTime();
 
-        sinkAgent.setLeftTime(leftTime - startTime);
-        sinkAgent.setIsLeftModel(true);
+        newAgent.setLeftTime(leftTime - startTime);
+        newAgent.setIsLeftModel(true);
 
-        const ownerModel = board.getModelById(sinkAgent.getModelId());
-        ownerModel.updateServiceCompletedAgentsList(sinkAgent);
+        // const ownerModel = board.getModelById(sinkAgent.getModelId());
+        // ownerModel.updateServiceCompletedAgentsList(sinkAgent);
     }
 
     public trigger(initiator: NetworkElement, newAgent: Agent): boolean {
         this.takeAgents(initiator, newAgent);
-        this.sinkAgents(newAgent);
+        this.sinkAgent(newAgent);
 
         return true;
     }
@@ -50,7 +49,10 @@ class SinkElement extends NetworkElement {
 
         return { agentsCameCount: this.agentsCameCount, }
     }
-
+    
+    public clearAgentsList(): void {
+        this.agentsList = [];
+    }
 }
 
 export default SinkElement;

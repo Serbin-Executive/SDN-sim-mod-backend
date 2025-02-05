@@ -52,6 +52,8 @@ class QueueElement extends NetworkElement {
             newAgent.setIsLeftModel(true);
             newAgent.setIsLost(true);
 
+            this.removeAgentFromList(newAgent);
+
             return;
         }
 
@@ -62,6 +64,7 @@ class QueueElement extends NetworkElement {
         }
 
         this.sendRequestsQueue.addFunction(() => {
+            this.removeAgentFromList(newAgent);
             currentNextElement.trigger(this, newAgent)
         });
 
