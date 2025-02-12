@@ -1,36 +1,21 @@
 import { randomUUID } from "crypto";
 import ControllerParametersService from "../../services/ControllerParametersService";
 import { TModelsInterval, TWorkTime } from "../../utils/constants";
-import { CONTROLLER_CHECK_INTERVAL_TIME, TControllerID, TServicedModel } from "./meta";
-import QueueElement from "../QueueElement";
+import { CONTROLLER_CHECK_INTERVAL_TIME, TControllerID, TServicedModel, TControllerParameter, TParametersStatesList } from "./meta";
 
 class Controller {
     private ID: TControllerID;
     private servicedModel: TServicedModel;
     private workTime: TWorkTime;
     private checkTimer: TModelsInterval;
-    private timeList: number[];
-    private CPUList: number[];
-    private usedDiskSpaceList: number[];
-    private memoryUsageList: number[];
-    private networkTrafficList: number[];
-    private packetLostList: number[];
-    private pingList: number[];
-    private jitterList: number[];
+    private parametersStatesList: TParametersStatesList;
 
     constructor() {
         this.ID = randomUUID();
         this.servicedModel = null;
         this.workTime = 0;
         this.checkTimer = null;
-        this.timeList = [];
-        this.CPUList = [];
-        this.usedDiskSpaceList = [];
-        this.memoryUsageList = [];
-        this.networkTrafficList = [];
-        this.packetLostList = [];
-        this.pingList = [];
-        this.jitterList = [];
+        this.parametersStatesList = [];
     }
 
     public getID(): TControllerID {
@@ -45,32 +30,8 @@ class Controller {
         return this.checkTimer;
     }
 
-    public getCPUList(): number[] {
-        return this.CPUList;
-    }
-
-    public getUsedDiskSpaceList(): number[] {
-        return this.usedDiskSpaceList;
-    }
-
-    public getMemoryUsageList(): number[] {
-        return this.memoryUsageList;
-    }
-
-    public getNetworkTrafficList(): number[] {
-        return this.networkTrafficList;
-    }
-
-    public getPacketLostList(): number[] {
-        return this.packetLostList;
-    }
-
-    public getPingList(): number[] {
-        return this.pingList;
-    }
-
-    public getJitterList(): number[] {
-        return this.jitterList;
+    public getParametersStatesList(): TParametersStatesList {
+        return this.parametersStatesList;
     }
 
     public setServicedModel(servicedModel: TServicedModel): void {
@@ -81,35 +42,11 @@ class Controller {
         this.checkTimer = checkTimer;
     }
 
-    public setCPUList(cpuList: number[]): void {
-        this.CPUList = cpuList;
+    public setParametersStatesList(parametersStatesList: TParametersStatesList): void {
+        this.parametersStatesList = parametersStatesList;
     }
 
-    public setUsedDiskSpaceList(usedDiskSpaceList: number[]): void {
-        this.usedDiskSpaceList = usedDiskSpaceList;
-    }
-
-    public setMemoryUSageList(memoryUsageList: number[]): void {
-        this.memoryUsageList = memoryUsageList;
-    }
-
-    public setNetworkTrafficList(networkTrafficList: number[]): void {
-        this.networkTrafficList = networkTrafficList;
-    }
-
-    public setPacketLostList(packetLostList: number[]): void {
-        this.packetLostList = packetLostList;
-    }
-
-    public setPingList(pingList: number[]): void {
-        this.pingList = pingList;
-    }
-
-    public setJitterList(jitterList: number[]): void {
-        this.jitterList = jitterList;
-    }
-
-    public printParameters(lastTime: number, lastUsedDiskSpace: number, memoryUsage: number, lastNetworkTraffic: number, lastPacketLost: number, lastPing: number, lastJitter: number, lastCPU: number): void {
+    public printParameters(lastTime: TControllerParameter, lastUsedDiskSpace: TControllerParameter, memoryUsage: TControllerParameter, lastNetworkTraffic: TControllerParameter, lastPacketLost: TControllerParameter, lastPing: TControllerParameter, lastJitter: TControllerParameter, lastCPU: TControllerParameter): void {
         console.log(`Model ID: ${this.servicedModel?.getID()}\n`);
         console.log("TIME: ", lastTime);
         console.log("USED DISK SPACE: ", lastUsedDiskSpace);
@@ -141,16 +78,18 @@ class Controller {
         const newJitter = ControllerParametersService.getJitter(modelSinkElement);
         const newCPU = ControllerParametersService.getCPU(this.servicedModel.getSourceElements());
 
-        this.usedDiskSpaceList.push(newUsedDiskSpace);
-        this.memoryUsageList.push(newMemoryUsage);
-        this.networkTrafficList.push(newNetworkTraffic);
-        this.packetLostList.push(newPacketLost);
-        this.pingList.push(newPing);
-        this.jitterList.push(newJitter);
-        this.CPUList.push(newCPU);
-
         this.workTime += CONTROLLER_CHECK_INTERVAL_TIME;
-        this.timeList.push(this.workTime);
+
+        this.parametersStatesList.push({
+            time: this.workTime,
+            CPU: newCPU,
+            usedDiskSpace: newUsedDiskSpace,
+            memoryUsage: newMemoryUsage,
+            networkTraffic: newNetworkTraffic,
+            packetLost: newPacketLost,
+            ping: newPing,
+            jitter: newJitter,
+        });
 
         this.printParameters(this.workTime, newUsedDiskSpace, newMemoryUsage, newNetworkTraffic, newPacketLost,newPing, newJitter, newCPU);
     }
@@ -169,14 +108,9 @@ class Controller {
 
     public printParametersLists(): void {
         console.log(`CONTROLLER ${this.ID}\n`)
-        console.log("TIME: ", this.timeList);
-        console.log("USED DISK SPACE: ", this.usedDiskSpaceList);
-        console.log("MEMORY USAGE: ", this.memoryUsageList);
-        console.log("NETWORK TRAFFIC: ", this.networkTrafficList);
-        console.log("PACKET LOST: ", this.packetLostList);
-        console.log("PING: ", this.pingList);
-        console.log("JITTER: ", this.jitterList);
-        console.log("CPU: ", this.CPUList);
+        this.parametersStatesList.forEach((parametersState) => {
+            console.log(JSON.stringify(parametersState, null, 2));
+        });
         console.log();
     }
 }

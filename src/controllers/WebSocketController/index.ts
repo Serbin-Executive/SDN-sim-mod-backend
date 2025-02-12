@@ -4,170 +4,178 @@ import { ModelsWorkingCommands, ModelsCommandsForHost, IServerMessage, ServerMes
 import { Client } from "../../domains/Client";
 import { randomUUID } from "crypto";
 
-let clientsList: Client[] = [];
+// export const createModelsByHostCommand = (board: Board): void => {
+//     board.createModels();
+// }
 
-const board = new Board();
+// export const startModels = (board: Board): void => {
+//     board.startModels()
+// }
 
-const MODEL_WORKING_COMMANDS = Object.values(ModelsWorkingCommands);
-const MODELS_COMMANDS_FOR_HOST = Object.values(ModelsCommandsForHost);
+//  export const stopModels = (board: Board): void => {
+//     board.stopModels();
+//  }
 
-export const createModelsByHostCommand = (board: Board): void => {
-    board.createModels();
-}
+export const WebSocketController = (board: Board, startDate: Date) => {
+    let clientsList: Client[] = [];
 
-export const startModels = (board: Board): void => {
-    board.startModels()
-}
+    const MODEL_WORKING_COMMANDS = Object.values(ModelsWorkingCommands);
+    const MODELS_COMMANDS_FOR_HOST = Object.values(ModelsCommandsForHost);
 
- export const stopModels = (board: Board): void => {
-    board.stopModels();
- }
-
-export const sendMessageCurrentClient = (messageType: string, message: any, webSocketClient: WebSocket): void => {
-    const serverMessage: IServerMessage = {
-        messageType: messageType,
-        message: message,
-    }
-
-    webSocketClient.send(JSON.stringify(serverMessage));
-}
-
-export const sendMessageAllClients = (messageType: string, message: any) => {
-    const serverMessage: IServerMessage = {
-        messageType: messageType,
-        message: message,
-    }
-
-    clientsList.forEach((client) => {
-        const clientSocket = client.getSocket();
-
-        if (!clientSocket) {
-            throw new Error("Cannot send clear charts message, someone client is undefined");
+    const sendMessageCurrentClient = (messageType: string, message: any, webSocketClient: WebSocket): void => {
+        const serverMessage: IServerMessage = {
+            messageType: messageType,
+            message: message,
         }
 
-        clientSocket.send(JSON.stringify(serverMessage));
-    });
-}
-
-export const sendModelsActionsStates = (webSocketClient: WebSocket): void => {
-    const isModelsStart = board.getIsModelStart();
-    const isModelsStop = board.getIsModelStop();
-
-    const modelsActionsStatesMessage: IServerMessage = {
-        messageType: ServerMessageTypes.MODELS_ACTIONS_STATES,
-        message: [isModelsStart, isModelsStop],
+        webSocketClient.send(JSON.stringify(serverMessage));
     }
 
-    webSocketClient.send(JSON.stringify(modelsActionsStatesMessage));
-}
+    const sendMessageAllClients = (messageType: string, message: any) => {
+        const serverMessage: IServerMessage = {
+            messageType: messageType,
+            message: message,
+        }
 
-const ActionsConfigsList: Record<ModelsWorkingCommands, IActionConfig> = {
-    [ModelsWorkingCommands.CREATE]: {
-        modelActionFunction: () => {createModelsByHostCommand(board)},
-        clientSendActionFunctions: [],
-        allClientsSendActionFunctions: [],
-        infoMessage: ServerInfoMessageTexts.CREATE_MODELS,
-    },
-    [ModelsWorkingCommands.START]: {
-        modelActionFunction: () => {startModels(board)},
-        clientSendActionFunctions: [sendModelsActionsStates],
-        allClientsSendActionFunctions: [() => {sendMessageAllClients(ServerMessageTypes.CLEAR_CHARTS, "")}
-        ],
-        infoMessage: ServerInfoMessageTexts.START_MODELS,
-    },
-    [ModelsWorkingCommands.STOP]: {
-        modelActionFunction: () => {stopModels(board)},
-        clientSendActionFunctions: [sendModelsActionsStates],
-        allClientsSendActionFunctions: [],
-        infoMessage: ServerInfoMessageTexts.STOP_MODELS,
-    },
-}
+        clientsList.forEach((client) => {
+            const clientSocket = client.getSocket();
 
-export const modelAction = (modelActionFunction: () => void, clientSendActionFunctions: any[], allClientsSendActionFunctions: any[], webSocketClient: WebSocket, infoMessage: string): void => {
-    modelActionFunction();
+            if (!clientSocket) {
+                throw new Error("Cannot send clear charts message, someone client is undefined");
+            }
 
-    clientSendActionFunctions.forEach((clientSendActionFunction) => {
-        clientSendActionFunction(webSocketClient);
-    });
+            clientSocket.send(JSON.stringify(serverMessage));
+        });
+    }
 
-    allClientsSendActionFunctions.forEach((allClientsSendActionFunction) => allClientsSendActionFunction());
+    const sendModelsActionsStates = (webSocketClient: WebSocket): void => {
+        const isModelsStart = board.getIsModelStart();
+        const isModelsStop = board.getIsModelStop();
 
-    sendMessageAllClients(ServerMessageTypes.MESSAGE, infoMessage);
-}
+        const modelsActionsStatesMessage: IServerMessage = {
+            messageType: ServerMessageTypes.MODELS_ACTIONS_STATES,
+            message: [isModelsStart, isModelsStop],
+        }
 
-export const webSocketClientSetup = (webSocketClient: WebSocket, client: Client): void => {
-    sendMessageCurrentClient(ServerMessageTypes.MESSAGE, ServerInfoMessageTexts.CONNECT_MESSAGE, webSocketClient);
+        webSocketClient.send(JSON.stringify(modelsActionsStatesMessage));
+    }
 
-    if (clientsList.length) {
+    const ActionsConfigsList: Record<ModelsWorkingCommands, IActionConfig> = {
+        [ModelsWorkingCommands.CREATE]: {
+            modelActionFunction: () => { board.createModels() },
+            clientSendActionFunctions: [],
+            allClientsSendActionFunctions: [],
+            infoMessage: ServerInfoMessageTexts.CREATE_MODELS,
+        },
+        [ModelsWorkingCommands.START]: {
+            modelActionFunction: () => {
+                board.startModels();
+                startDate = new Date();
+            },
+            clientSendActionFunctions: [sendModelsActionsStates],
+            allClientsSendActionFunctions: [() => { sendMessageAllClients(ServerMessageTypes.CLEAR_CHARTS, "") }
+            ],
+            infoMessage: ServerInfoMessageTexts.START_MODELS,
+        },
+        [ModelsWorkingCommands.STOP]: {
+            modelActionFunction: () => { board.stopModels() },
+            clientSendActionFunctions: [sendModelsActionsStates],
+            allClientsSendActionFunctions: [],
+            infoMessage: ServerInfoMessageTexts.STOP_MODELS,
+        },
+    }
+
+    const modelAction = (modelActionFunction: () => void, clientSendActionFunctions: any[], allClientsSendActionFunctions: any[], webSocketClient: WebSocket, infoMessage: string): void => {
+        modelActionFunction();
+
+        clientSendActionFunctions.forEach((clientSendActionFunction) => {
+            clientSendActionFunction(webSocketClient);
+        });
+
+        allClientsSendActionFunctions.forEach((allClientsSendActionFunction) => allClientsSendActionFunction());
+
+        sendMessageAllClients(ServerMessageTypes.MESSAGE, infoMessage);
+    }
+
+    const webSocketClientSetup = (webSocketClient: WebSocket, client: Client): void => {
+        sendMessageCurrentClient(ServerMessageTypes.MESSAGE, ServerInfoMessageTexts.CONNECT_MESSAGE, webSocketClient);
+
+        if (clientsList.length) {
+            clientsList.push(client);
+
+            console.log("Another client connected to the server");
+            return;
+        }
+
+        client.setIsHost(true);
+
         clientsList.push(client);
 
-        console.log("Another client connected to the server");
-        return;
+        modelAction(() => { board.createModels() }, [], [], webSocketClient, ServerInfoMessageTexts.CREATE_MODELS);
+
+        sendMessageCurrentClient(ServerMessageTypes.MODELS_WORKING_COMMANDS, MODELS_COMMANDS_FOR_HOST, webSocketClient);
+
+        console.log("First client connected to server and get all commands!");
     }
 
-    client.setIsHost(true);
+    const handleClientCommand = (webSocketClient: WebSocket, commandID: string) => {
+        if (!MODEL_WORKING_COMMANDS.includes(commandID as ModelsWorkingCommands)) {
+            console.log("Unexpected command from client!");
+            return;
+        };
 
-    clientsList.push(client);
+        const actionConfigure: IActionConfig = ActionsConfigsList[commandID as ModelsWorkingCommands];
 
-    modelAction(() => {createModelsByHostCommand(board)}, [], [], webSocketClient, ServerInfoMessageTexts.CREATE_MODELS);
+        const modelActionFunction = actionConfigure.modelActionFunction;
+        const clientSendActionFunction = actionConfigure.clientSendActionFunctions;
+        const allClientsSendActionFunctions = actionConfigure.allClientsSendActionFunctions;
+        const actionInfoMessage = actionConfigure.infoMessage;
 
-    sendMessageCurrentClient(ServerMessageTypes.MODELS_WORKING_COMMANDS, MODELS_COMMANDS_FOR_HOST, webSocketClient);
-
-    console.log("First client connected to server and get all commands!");
-}
-
-const handleClientCommand = (webSocketClient: WebSocket, commandID: string) => {
-    if (!MODEL_WORKING_COMMANDS.includes(commandID as ModelsWorkingCommands)) {
-        console.log("Unexpected command from client!");
-        return;
-    };
-
-    const actionConfigure: IActionConfig = ActionsConfigsList[commandID as ModelsWorkingCommands];
-
-    const modelActionFunction = actionConfigure.modelActionFunction;
-    const clientSendActionFunction = actionConfigure.clientSendActionFunctions;
-    const allClientsSendActionFunctions = actionConfigure.allClientsSendActionFunctions;
-    const actionInfoMessage = actionConfigure.infoMessage;
-
-    modelAction(modelActionFunction, clientSendActionFunction, allClientsSendActionFunctions, webSocketClient, actionInfoMessage);
-}
-
-export const hanldeClientLeave = (leavedClientID: string) => {
-    if (clientsList[0].getID() === leavedClientID) {
-        board.stopModels();
-
-        sendMessageAllClients(ServerMessageTypes.MESSAGE, ServerInfoMessageTexts.STOP_MODELS);
+        modelAction(modelActionFunction, clientSendActionFunction, allClientsSendActionFunctions, webSocketClient, actionInfoMessage);
     }
 
-    clientsList = clientsList.filter((client) =>
-        client.getID() !== leavedClientID
-    );
+    const hanldeClientLeave = (leavedClientID: string) => {
+        if (clientsList[0].getID() === leavedClientID) {
+            board.stopModels();
 
-    console.log(`Another client closed connection!`);
-}
+            sendMessageAllClients(ServerMessageTypes.MESSAGE, ServerInfoMessageTexts.STOP_MODELS);
+        }
 
-export const getWebSocketErrorStatus = (event: any): void => {
-    console.log("WebSocket error!", event.data);
-}
+        clientsList = clientsList.filter((client) =>
+            client.getID() !== leavedClientID
+        );
 
-export const webSocketCreateConnection = (): void => {
-    const webSocketServer = new WebSocket.Server({ port: WEB_CLIENT_PORT });
+        console.log(`Another client closed connection!`);
+    }
 
-    webSocketServer.on("connection", (webSocketClient) => {
-        const newClient = new Client();
-        const clientID: string = randomUUID();
+    const getWebSocketErrorStatus = (event: any): void => {
+        console.log("WebSocket error!", event.data);
+    }
 
-        newClient.setID(clientID);
-        newClient.setSocket(webSocketClient);
+    const webSocketCreateConnection = (): void => {
+        const webSocketServer = new WebSocket.Server({ port: WEB_CLIENT_PORT });
 
-        webSocketClientSetup(webSocketClient, newClient);
+        webSocketServer.on("connection", (webSocketClient) => {
+            const newClient = new Client();
+            const clientID: string = randomUUID();
 
-        webSocketClient.on('message', (event) => {
-            const parsedString = event.toString("utf-8");
+            newClient.setID(clientID);
+            newClient.setSocket(webSocketClient);
 
-            handleClientCommand(webSocketClient, parsedString);
+            webSocketClientSetup(webSocketClient, newClient);
+
+            webSocketClient.on('message', (event) => {
+                const parsedString = event.toString("utf-8");
+
+                handleClientCommand(webSocketClient, parsedString);
+            });
+            webSocketClient.on('close', () => { hanldeClientLeave(clientID) });
+            webSocketClient.on("error", getWebSocketErrorStatus);
         });
-        webSocketClient.on('close', () => { hanldeClientLeave(clientID) });
-        webSocketClient.on("error", getWebSocketErrorStatus);
-    });
+    }
+
+    return {
+        webSocketCreateConnection,
+        sendMessageAllClients,
+    }
 }
