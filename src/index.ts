@@ -1,9 +1,10 @@
 import express, { type Express } from "express";
 import DefaultErrorHandler from "./middlewares/DefaultErrorHandler";
 import CORS from "./middlewares/CORS";
-import { webSocketCreateConnection } from "./controllers/WebSocketController";
+import { createModelsByHostCommand, startModels, stopModels, webSocketCreateConnection } from "./controllers/WebSocketController";
 import { PORT } from "./utils/constants";
 import { checkUrl } from "./controllers/CheckUrlController";
+import Board from "./domains/Board";
 
 const app: Express = express();
 // const port = process.env.PORT || 5500;
@@ -11,20 +12,16 @@ const app: Express = express();
 app.use(DefaultErrorHandler);
 app.use(CORS);
 
-// createModels();
-// startModels();
-// const board = new Board();
-// const webSocketController = new WebSocketController();
+const board = new Board();
 
-// webSocketController.setServicedBoard(board);
-// webSocketController.initActionsConfigsList();
-
-// board.createModels();
-// board.startModels();
-
+createModelsByHostCommand(board);
+startModels(board);
 export const startDate = new Date();
+setTimeout(() => {
+    stopModels(board);
+}, 40100)
 
-webSocketCreateConnection();
+// webSocketCreateConnection();
 
 app.get(`/check-url/:url`, (req, res) => {
     const { url } = req.params;

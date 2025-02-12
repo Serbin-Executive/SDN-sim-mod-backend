@@ -64,6 +64,7 @@ abstract class NetworkElement {
 
         sourceNetworkElement.setAgentsCount(sourceNetworkElement.agentsCount - 1);
         sourceNetworkElement.setAgentsLeftCount(sourceNetworkElement.agentsLeftCount + 1);
+        sourceNetworkElement.removeAgentFromList(newAgent);
 
         this.agentsList.push(newAgent);
 

@@ -1,16 +1,20 @@
-import { SendRequestsLinkedList } from "../SendRequestsLinkedList";
 import NetworkElement from "../NetworkElement";
-import { ISurroundingNetworkElements, TNetworkElementAgentsLostCount } from "../../utils/constants";
 import Agent from "../Agent";
+import { SendRequestsLinkedList } from "../SendRequestsLinkedList";
+import { ISurroundingNetworkElements, TNetworkElementAgentsLostCount } from "../../utils/constants";
+import { TLostSinkElement } from "./meta";
+import { startDate } from "../..";
 
 class QueueElement extends NetworkElement {
     private sendRequestsQueue: SendRequestsLinkedList;
+    private lostSinkElement: TLostSinkElement;
     private agentsLostCount: TNetworkElementAgentsLostCount;
 
     constructor() {
         super();
 
         this.sendRequestsQueue = new SendRequestsLinkedList();
+        this.lostSinkElement = null;
         this.agentsLostCount = 0;
     }
 
@@ -39,32 +43,37 @@ class QueueElement extends NetworkElement {
 
         const currentNextElement = this.nextElement;
 
+        if (!this.lostSinkElement) {
+            throw new Error("Cannot trigger queue element, lost sink element is undefined");
+        }
+
+        this.takeAgents(initiator, newAgent);
+
         if ((this.agentsCount + 1) > this.capacity) {
-            const initiatorAgentsLeftCount = initiator.getAgentsLeftCount();
+            // const initiatorAgentsLeftCount = initiator.getAgentsLeftCount();
 
-            initiator.setAgentsLeftCount(initiatorAgentsLeftCount + 1);
+            // initiator.setAgentsLeftCount(initiatorAgentsLeftCount + 1);
 
-            this.agentsLostCount += 1;
-
-            const lostTime = new Date().getUTCMilliseconds();
+            const lostTime = (new Date()).getTime() - startDate.getTime();
 
             newAgent.setLeftTime(lostTime);
             newAgent.setIsLeftModel(true);
             newAgent.setIsLost(true);
 
-            this.removeAgentFromList(newAgent);
+            this.lostSinkElement.trigger(this,newAgent);
+            this.agentsLostCount += 1;
+
+            // this.removeAgentFromList(newAgent);
 
             return;
         }
-
-        this.takeAgents(initiator, newAgent);
 
         if (!currentNextElement) {
             throw new Error("Cannot trigger next element, next elements are undefined");
         }
 
         this.sendRequestsQueue.addFunction(() => {
-            this.removeAgentFromList(newAgent);
+            // this.removeAgentFromList(newAgent);
             currentNextElement.trigger(this, newAgent)
         });
 
@@ -81,6 +90,10 @@ class QueueElement extends NetworkElement {
 
     public getSendRequestsQueue(): SendRequestsLinkedList {
         return this.sendRequestsQueue;
+    }
+
+    public getLostSinkElement(): TLostSinkElement {
+        return this.lostSinkElement;
     }
 
     public getAgentsLostCount(): TNetworkElementAgentsLostCount {
@@ -109,6 +122,10 @@ class QueueElement extends NetworkElement {
 
     public setSendRequestsQueue(newQueue: SendRequestsLinkedList) {
         this.sendRequestsQueue = newQueue;
+    }
+
+    public setLostSinkElement(lostSinkElement: TLostSinkElement) {
+        this.lostSinkElement = lostSinkElement;
     }
 
     public setAgentsLostCount(agentsLostCount: TNetworkElementAgentsLostCount): void {

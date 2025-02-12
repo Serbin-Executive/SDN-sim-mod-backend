@@ -1,15 +1,25 @@
 import Agent from "../Agent";
-import Model from "../Model";
 import NetworkElement from "../NetworkElement";
 import { ISurroundingNetworkElements } from "../../utils/constants";
 import { startDate } from "../..";
+import { DEFAULT_LAST_AGENTS_STATISTIC, ILastAgentsStatistic } from "./meta";
 
 class SinkElement extends NetworkElement {
+    private lastAgentsStatistic: ILastAgentsStatistic;
+
     constructor() {
         super();
         this.capacity = Infinity;
         this.nextElement = null;
         this.agentsLeftCount = 0;
+        this.lastAgentsStatistic = DEFAULT_LAST_AGENTS_STATISTIC;
+    }
+
+    private updateStatisticForControllers(newAgent: Agent): void {
+        this.lastAgentsStatistic.previousAgentLeftTime = this.lastAgentsStatistic.lastAgentLeftTime;
+        
+        this.lastAgentsStatistic.lastAgentCameTime = newAgent.getCameTime();
+        this.lastAgentsStatistic.lastAgentLeftTime = newAgent.getLeftTime();
     }
 
     protected sinkAgent(newAgent: Agent): void {
@@ -21,8 +31,9 @@ class SinkElement extends NetworkElement {
         newAgent.setLeftTime(leftTime - startTime);
         newAgent.setIsLeftModel(true);
 
-        // const ownerModel = board.getModelById(sinkAgent.getModelId());
-        // ownerModel.updateServiceCompletedAgentsList(sinkAgent);
+        this.updateStatisticForControllers(newAgent);
+
+        this.removeAgentFromList(newAgent);
     }
 
     public trigger(initiator: NetworkElement, newAgent: Agent): boolean {
@@ -42,16 +53,18 @@ class SinkElement extends NetworkElement {
         }
     }
 
-    public getCurrentState() {
-        // if (!this.agentsCameCount || !this.agentsCount) {
-        //     throw new Error("Cannot get current state, state properties are undefined");
-        // }
-
-        return { agentsCameCount: this.agentsCameCount, }
+    public getStatisticForController(): ILastAgentsStatistic {
+        return this.lastAgentsStatistic;
     }
-    
-    public clearAgentsList(): void {
-        this.agentsList = [];
+
+    public getCurrentState() {
+        return { 
+            agentsCameCount: this.agentsCameCount,
+         }
+    }
+
+    public setStatisticForController(lastAgentsStatistic: ILastAgentsStatistic): void {
+        this.lastAgentsStatistic = lastAgentsStatistic;
     }
 }
 

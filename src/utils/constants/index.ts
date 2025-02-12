@@ -4,10 +4,10 @@ import NetworkElement from "../../domains/NetworkElement";
 import Model from "../../domains/Model";
 import WebSocket from "ws";
 
-export const MODELS_COUNT_VALUE: number = 2;
+export const MODELS_COUNT_VALUE: number = 1;
 
-export const MIN_SPAWN_AGENTS_VALUE: number = 5;
-export const MAX_SPAWN_AGENTS_VALUE: number = 10;
+export const MIN_SPAWN_AGENTS_VALUE: number = 8;
+export const MAX_SPAWN_AGENTS_VALUE: number = 14;
 export const WORK_INTERVAL_VALUE: number = 2000;
 export const STATISTIC_INTERVAL_VALUE: number = 5000;
 export const QUEUE_CAPACITY: number = 10;
@@ -16,6 +16,8 @@ export const DELAY_VALUE: number = 1000;
 
 export const PORT: number = 5500;
 export const EXPRESS_APP_ALLOWED_CORS_URL: string = "http://localhost:3000";
+
+export const DEFAULT_USED_DISK_SPACE: number = 0.4;
 
 export type TSystem = "system";
 export type TNetworkElementInitiator = NetworkElement | TSystem;
@@ -99,20 +101,8 @@ export interface IModelsStatistic {
     allTimeServiceCompletedAgentsCount: number;
 }
 
-export const DEFAULT_MODELS_STATISTIC: IModelsStatistic = {
-    allTimeServiceCompletedAgentsCount: 0,
-}
-
 export interface IModelStatistic {
-    ping: number;
-    jitter: number;
     allAgentsCount: number;
-}
-
-export const DEFAULT_MODEL_STATISTIC: IModelStatistic = {
-    ping: 0,
-    jitter: 0,
-    allAgentsCount: 0,
 }
 
 export interface IBoardStatistic {
@@ -121,14 +111,6 @@ export interface IBoardStatistic {
     modelsAgentsList: TModelsAgentsList;
     sentModelsAgentsStatesInfo: TObjectsStatesInfo;
     allModelsAgentsStatesInfo: TObjectsStatesInfo;
-}
-
-export const DEFAULT_BOARD_STATISTIC: IBoardStatistic = {
-    sentModelsStatesInfo: [],
-    allModelsStatesInfo: [],
-    modelsAgentsList: [],
-    sentModelsAgentsStatesInfo: [],
-    allModelsAgentsStatesInfo: [],
 }
 
 export enum ModelsWorkingCommands {

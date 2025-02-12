@@ -6,7 +6,7 @@ import SinkElement from "../SinkElement";
 import Agent from "../Agent";
 import { startDate } from "../..";
 import { randomUUID } from "crypto";
-import { IModelStateInfo, INetworElementState, ICurrentState, IStateInfoField, TWorkTime, getRandomArbitrary, MIN_SPAWN_AGENTS_VALUE, MAX_SPAWN_AGENTS_VALUE, TModelID, DEFAULT_MODEL_STATISTIC, IModelStatistic, TModelStatesInfo, TObjectsStatesInfo, TStatesInfo, TStateInfo, TAgentsList } from "../../utils/constants";
+import { IModelStateInfo, INetworElementState, ICurrentState, IStateInfoField, TWorkTime, getRandomArbitrary, MIN_SPAWN_AGENTS_VALUE, MAX_SPAWN_AGENTS_VALUE, TModelID, IModelStatistic, TModelStatesInfo, TObjectsStatesInfo, TStatesInfo, TStateInfo, TAgentsList } from "../../utils/constants";
 
 class Model {
     private ID: TModelID;
@@ -14,7 +14,7 @@ class Model {
     private networkElements: NetworkElement[];
     private queueElements: QueueElement[];
     private delayElements: DelayElement[];
-    private sinkElements: SinkElement[];
+    private sinkElement: SinkElement | null;
     private statistic: IModelStatistic;
 
     constructor() {
@@ -23,8 +23,10 @@ class Model {
         this.networkElements = [];
         this.queueElements = [];
         this.delayElements = [];
-        this.sinkElements = [];
-        this.statistic = DEFAULT_MODEL_STATISTIC;
+        this.sinkElement = null;
+        this.statistic = {
+            allAgentsCount: 0,
+        };
     }
 
     public getID(): string {
@@ -47,8 +49,8 @@ class Model {
         return this.delayElements;
     }
 
-    public getSinkElements(): SinkElement[] {
-        return this.sinkElements;
+    public getSinkElement(): SinkElement | null {
+        return this.sinkElement;
     }
 
     public getStatistic(): IModelStatistic {
@@ -91,7 +93,7 @@ class Model {
 
     public getModelStateInfo = (workTime: TWorkTime): IModelStateInfo => {
         const networkElements = this.networkElements;
-        // console.log(`Model ID: ${this.ID}\n`);
+        console.log(`Model ID: ${this.ID}\n`);
 
         const currentState: IModelStateInfo = {
             time: String(workTime),
@@ -107,7 +109,7 @@ class Model {
 
             const modelElementStatistic: ICurrentState = element.getCurrentState();
 
-            // console.log(`[${element.constructor.name}#${element.getId()}]`);
+            console.log(`[${element.constructor.name}#${element.getId()}]`);
 
             const statisticFieldsArray = Object.entries(modelElementStatistic).map(([fieldName, fieldValue]) => {
                 const currentStatisticField: IStateInfoField = {
@@ -117,10 +119,10 @@ class Model {
 
                 currentNetworkElementState.statisticFields.push(currentStatisticField);
 
-                // return { Field: fieldName, Value: fieldValue };
+                return { Field: fieldName, Value: fieldValue };
             });
 
-            // console.table(statisticFieldsArray);
+            console.table(statisticFieldsArray);
 
             currentState.networkElementsStatesList.push(currentNetworkElementState);
         });
@@ -128,25 +130,27 @@ class Model {
         return currentState;
     }
 
-    public getNeedSendServiceCompletedAgentsStatesInfo(): TStatesInfo {
-        const serviceCompletedAgentsList: TAgentsList = [];
+    // public getNeedSendServiceCompletedAgentsStatesInfo(): TStatesInfo {
+    //     const serviceCompletedAgentsList: TAgentsList = [];
 
-        this.sinkElements.forEach((sinkElement) => {
-            const elementAgentList: TAgentsList = sinkElement.getAgentsList();
+    //     // this.sinkElements.forEach((sinkElement) => {
+    //     //     const elementAgentList: TAgentsList = sinkElement.getAgentsList();
 
-            elementAgentList.forEach((agent) => {
-                serviceCompletedAgentsList.push(agent);
-            });
-        });
+    //     //     elementAgentList.forEach((agent) => {
+    //     //         serviceCompletedAgentsList.push(agent);
+    //     //     });
+    //     // });
+
+
         
-        const serviceCompletedAgentsStatesInfo: TStatesInfo = serviceCompletedAgentsList.map((agent) => {
-            const agentState = agent.getCurrentState();
+    //     const serviceCompletedAgentsStatesInfo: TStatesInfo = serviceCompletedAgentsList.map((agent) => {
+    //         const agentState = agent.getCurrentState();
 
-            return this.getStateInfo(agentState);
-        });
+    //         return this.getStateInfo(agentState);
+    //     });
 
-        return serviceCompletedAgentsStatesInfo;
-    }
+    //     return serviceCompletedAgentsStatesInfo;
+    // }
 
     public setSourceElements(sourceElements: SourceElement[]): void {
         this.sourceElements = sourceElements;
@@ -164,8 +168,8 @@ class Model {
         this.delayElements = delayElements;
     }
 
-    public setSinkElements(sinkElements: SinkElement[]): void {
-        this.sinkElements = sinkElements;
+    public setSinkElement(sinkElement: SinkElement): void {
+        this.sinkElement = sinkElement;
     }
 
     public setStatistic(statistic: IModelStatistic): void {
@@ -184,24 +188,15 @@ class Model {
     }
 
     public clearStatistic(): void {
-        this.statistic = DEFAULT_MODEL_STATISTIC;
+        this.statistic = {
+            allAgentsCount: 0,
+        };
     }
 
     public clearIntervalStatistic(): void {
         this.sourceElements.forEach((sourceElement) => {
-            sourceElement.clearAgentsList();
+            sourceElement.clearReceiptIntensity();
         })
-    }
-
-    public updateStatistic(ping: number, jitter: number): void {
-        this.statistic.ping = ping;
-        this.statistic.jitter = jitter;
-    }
-
-    public clearSendingStatistic(): void {
-        this.sinkElements.forEach((sinkElement) => {
-            sinkElement.clearAgentsList();
-        });
     }
 
     public clearAgents(): void {

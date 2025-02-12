@@ -1,16 +1,17 @@
 import Model from "../Model";
-import Agent from "../Agent";
 import NetworkElement from "../NetworkElement";
 import SourceElement from "../SourceElement";
 import QueueElement from "../QueueElement";
 import DelayElement from "../DelayElement";
 import SinkElement from "../SinkElement";
-import { startDate } from "../..";
-import { TModelsList, TWorkTime, TModelsInterval, TModelID, TModelsStatesInfo, TModelStatesInfo, STATISTIC_INTERVAL_VALUE, TObjectsStatesInfo, IBoardStatistic, DEFAULT_BOARD_STATISTIC, TStatesInfo, MODELS_COUNT_VALUE, addElementsInList, getPreviousElementsList, settingNextElementsInSequence, QUEUE_CAPACITY, DELAY_CAPACITY, DELAY_VALUE, WORK_INTERVAL_VALUE, TModelsLastStateInfo, IModelStateInfo, IModelsStatistic, DEFAULT_MODELS_STATISTIC, getRandomArbitrary, MAX_SPAWN_AGENTS_VALUE, MIN_SPAWN_AGENTS_VALUE, ServerMessageTypes } from "../../utils/constants";
+import { TModelsList, TWorkTime, TModelsInterval, TModelID, STATISTIC_INTERVAL_VALUE, TObjectsStatesInfo, TStatesInfo, MODELS_COUNT_VALUE, addElementsInList, getPreviousElementsList, settingNextElementsInSequence, QUEUE_CAPACITY, DELAY_CAPACITY, DELAY_VALUE, WORK_INTERVAL_VALUE, TModelsLastStateInfo, IModelStateInfo, ServerMessageTypes } from "../../utils/constants";
 import { sendMessageAllClients } from "../../controllers/WebSocketController";
+import { TControllersList } from "./meta";
+import Controller from "../Controller";
 
 class Board {
     private modelsList: TModelsList;
+    private controllersList: TControllersList;
     private workTime: TWorkTime;
     private modelsWorkTimer: TModelsInterval;
     private sendModelsStatisticTimer: TModelsInterval;
@@ -19,6 +20,7 @@ class Board {
 
     constructor() {
         this.modelsList = [];
+        this.controllersList = [];
         this.workTime = 0;
         this.modelsWorkTimer = null;
         this.sendModelsStatisticTimer = null;
@@ -28,6 +30,10 @@ class Board {
 
     public getModelsList(): TModelsList {
         return this.modelsList;
+    }
+
+    public getControllersList(): TControllersList {
+        return this.controllersList;
     }
 
     public getModelById(modelId: TModelID): Model {
@@ -72,20 +78,24 @@ class Board {
         return needSendModelsStatesInfo;
     }
 
-    public getNeedSendModelsAgentsStatesInfo(modelsList: TModelsList): TObjectsStatesInfo {
-        const needSendModelsAgentsStatesInfo: TObjectsStatesInfo = [];
+    // public getNeedSendModelsAgentsStatesInfo(modelsList: TModelsList): TObjectsStatesInfo {
+    //     const needSendModelsAgentsStatesInfo: TObjectsStatesInfo = [];
 
-        modelsList.forEach((model) => {
-            const needSendModelAgentsStatesInfo: TStatesInfo = model.getNeedSendServiceCompletedAgentsStatesInfo();
+    //     modelsList.forEach((model) => {
+    //         const needSendModelAgentsStatesInfo: TStatesInfo = model.getNeedSendServiceCompletedAgentsStatesInfo();
 
-            needSendModelsAgentsStatesInfo.push(needSendModelAgentsStatesInfo);
-        });
+    //         needSendModelsAgentsStatesInfo.push(needSendModelAgentsStatesInfo);
+    //     });
 
-        return needSendModelsAgentsStatesInfo;
-    }
+    //     return needSendModelsAgentsStatesInfo;
+    // }
 
     public setModelsList(modelsList: TModelsList): void {
         this.modelsList = modelsList;
+    }
+    
+    public setControllersList(controllersList: TControllersList): void {
+        this.controllersList = controllersList;
     }
 
     public setWorkTime(workTime: TWorkTime): void {
@@ -112,17 +122,13 @@ class Board {
         this.modelsList.push(model)
     }
 
+    public addControllerToBoard(controller: Controller): void {
+        this.controllersList.push(controller);
+    }
+
     public clearIntervalStatistic(): void {
         this.modelsList.forEach((model) => {
             model.clearIntervalStatistic();
-        })
-    }
-
-    public clearSendingStatistic(): void {
-        const modelsList = this.modelsList;
-
-        modelsList.forEach((model) => {
-            model.clearSendingStatistic();
         })
     }
 
@@ -140,48 +146,13 @@ class Board {
 
     public statisticIntervalAction(): void {
         const needSendModelsStatesInfo = this.getNeedSendModelsStatesInfo(this.modelsList);
-        // const needSendModelsAgentsStatesInfo = this.getNeedSendModelsAgentsStatesInfo(modelsList);
 
         sendMessageAllClients(ServerMessageTypes.MODELS_STATES, needSendModelsStatesInfo);
-        //send agents
-        this.modelsList.forEach((model) => {
-            const sinkElements = model.getSinkElements();
-
-            let pingSum: number = 0;
-            let jitterSum: number = 0;
-
-            sinkElements.forEach((sinkElement) => {
-                const agentsList = sinkElement.getAgentsList();
-
-                console.log(sinkElement.getId())
-                console.log(sinkElement.getAgentsList());
-
-                pingSum += agentsList.reduce((pingSum, agent) => pingSum + (agent.getLeftTime() - agent.getCameTime()), 0);
-
-                agentsList.forEach((agent, index) => {
-                    if (!index) {
-                        return 0;
-                    }
-
-                    jitterSum += agent.getLeftTime() - agentsList[index - 1].getLeftTime();
-                })
-            });
-
-            const agentsCount: number = sinkElements.reduce((agentsCount, sinkElement) => agentsCount + sinkElement.getAgentsList().length, 0);
-
-            const averagePing: number = pingSum / agentsCount;
-            const averageJitter: number = jitterSum / agentsCount;
-
-            model.updateStatistic(averagePing, averageJitter); 
-
-            console.log("Model statistic: ", model.getStatistic());
-        });
-
-        this.clearSendingStatistic();
     }
 
     public createModels(): void {
         this.modelsList = [];
+        this.controllersList = [];
 
         for (let index = 0; index < MODELS_COUNT_VALUE; index++) {
             const newModel = new Model();
@@ -190,23 +161,23 @@ class Board {
             const networkElements: NetworkElement[] = [];
             const queueElements: QueueElement[] = [];
             const delayElements: DelayElement[] = [];
-            const sinkElements: SinkElement[] = [];
 
             const sourceElement = new SourceElement();
             const queueElement = new QueueElement();
             const delayElement = new DelayElement();
             const sinkElement = new SinkElement();
+            const lostSinkElement = new SinkElement();
 
             addElementsInList(sourceElements, sourceElement);
             addElementsInList(networkElements, sourceElement, queueElement, delayElement, sinkElement);
             addElementsInList(queueElements, queueElement);
             addElementsInList(delayElements, delayElement);
-            addElementsInList(sinkElements, sinkElement);
 
             sourceElement.setPreviousElements(getPreviousElementsList());
             queueElement.setPreviousElements(getPreviousElementsList(sourceElement));
             delayElement.setPreviousElements(getPreviousElementsList(queueElement));
             sinkElement.setPreviousElements(getPreviousElementsList(delayElement));
+            lostSinkElement.setPreviousElements(getPreviousElementsList(queueElement));
 
             settingNextElementsInSequence(networkElements);
 
@@ -214,43 +185,36 @@ class Board {
             delayElement.setCapacity(DELAY_CAPACITY);
 
             queueElement.sendListenerInit();
+            queueElement.setLostSinkElement(lostSinkElement);
             delayElement.setDelayValue(DELAY_VALUE);
 
             newModel.setSourceElements(sourceElements);
             newModel.setNetworkElements(networkElements);
             newModel.setQueueElements(queueElements);
             newModel.setDelayElements(delayElements);
-            newModel.setSinkElements(sinkElements);
+            newModel.setSinkElement(sinkElement);
 
             this.addModelToBoard(newModel);
+
+            const newController = new Controller();
+
+            newController.setServicedModel(newModel);
+
+            this.addControllerToBoard(newController);
 
             console.log("\nCREATE SUCCESS\n");
         }
     }
 
-    public clearStartedModelsStatistic(): void {
-        this.modelsList.forEach((model) => {
-            model.clearSendingStatistic();
-        });
-    }
-
-    // public clearAgentsInStoppedModels(): void {
-    //     this.modelsList.forEach((model) => {
-    //         model.clearAgents();
-    //     });
-
-    //     this.setWorkTime(0);
-    // }
-
     public startModels(): void {
-        this.clearStartedModelsStatistic();
-
         if (this.isModelsStart) {
             return;
         }
     
         this.modelsWorkTimer = setInterval(() => this.modelsIntervalAction(), WORK_INTERVAL_VALUE);
         this.sendModelsStatisticTimer = setInterval(() => this.statisticIntervalAction(), STATISTIC_INTERVAL_VALUE);
+
+        this.controllersList.forEach((controller) => controller.start());
 
         this.isModelsStop = false;
         this.isModelsStart = true;
@@ -274,13 +238,20 @@ class Board {
             model.stop();
         })
 
+        this.controllersList.forEach((controller) => {
+            controller.stop();
+        })
+
         this.workTime = 0;
-        // this.clearAgentsInStoppedModels();
 
         this.isModelsStart = false;
         this.isModelsStop = true;
 
         console.log("\nSTOP SUCCESS\n");
+
+        this.controllersList.forEach((controller) => {
+            controller.printParametersLists();
+        })
     }
 }
 
