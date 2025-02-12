@@ -1,13 +1,27 @@
 import WebSocket from "ws";
-import { createModels, startModels, stopModels, isModelsStart, isModelsStop } from "../ModelsController";
-import { WEB_CLIENT_PORT, ModelsWorkingCommands, IServerMessage, ServerMessageTypes, ServerInfoMessageTexts, ModelsCommandsForHost, IActionConfig } from "./meta";
+import Board from "../../domains/Board";
+import { ModelsWorkingCommands, ModelsCommandsForHost, IServerMessage, ServerMessageTypes, IActionConfig, ServerInfoMessageTexts, WEB_CLIENT_PORT, WORK_INTERVAL_VALUE, STATISTIC_INTERVAL_VALUE } from "../../utils/constants";
 import { Client } from "../../domains/Client";
 import { randomUUID } from "crypto";
 
 let clientsList: Client[] = [];
 
+const board = new Board();
+
 const MODEL_WORKING_COMMANDS = Object.values(ModelsWorkingCommands);
 const MODELS_COMMANDS_FOR_HOST = Object.values(ModelsCommandsForHost);
+
+export const createModelsByHostCommand = (board: Board): void => {
+    board.createModels();
+}
+
+export const startModels = (board: Board): void => {
+    board.startModels()
+}
+
+ export const stopModels = (board: Board): void => {
+    board.stopModels();
+ }
 
 export const sendMessageCurrentClient = (messageType: string, message: any, webSocketClient: WebSocket): void => {
     const serverMessage: IServerMessage = {
@@ -36,6 +50,9 @@ export const sendMessageAllClients = (messageType: string, message: any) => {
 }
 
 export const sendModelsActionsStates = (webSocketClient: WebSocket): void => {
+    const isModelsStart = board.getIsModelStart();
+    const isModelsStop = board.getIsModelStop();
+
     const modelsActionsStatesMessage: IServerMessage = {
         messageType: ServerMessageTypes.MODELS_ACTIONS_STATES,
         message: [isModelsStart, isModelsStop],
@@ -46,20 +63,20 @@ export const sendModelsActionsStates = (webSocketClient: WebSocket): void => {
 
 const ActionsConfigsList: Record<ModelsWorkingCommands, IActionConfig> = {
     [ModelsWorkingCommands.CREATE]: {
-        modelActionFunction: createModels,
+        modelActionFunction: () => {createModelsByHostCommand(board)},
         clientSendActionFunctions: [],
         allClientsSendActionFunctions: [],
         infoMessage: ServerInfoMessageTexts.CREATE_MODELS,
     },
     [ModelsWorkingCommands.START]: {
-        modelActionFunction: startModels,
+        modelActionFunction: () => {startModels(board)},
         clientSendActionFunctions: [sendModelsActionsStates],
         allClientsSendActionFunctions: [() => {sendMessageAllClients(ServerMessageTypes.CLEAR_CHARTS, "")}
         ],
         infoMessage: ServerInfoMessageTexts.START_MODELS,
     },
     [ModelsWorkingCommands.STOP]: {
-        modelActionFunction: stopModels,
+        modelActionFunction: () => {stopModels(board)},
         clientSendActionFunctions: [sendModelsActionsStates],
         allClientsSendActionFunctions: [],
         infoMessage: ServerInfoMessageTexts.STOP_MODELS,
@@ -92,6 +109,8 @@ export const webSocketClientSetup = (webSocketClient: WebSocket, client: Client)
 
     clientsList.push(client);
 
+    modelAction(() => {createModelsByHostCommand(board)}, [], [], webSocketClient, ServerInfoMessageTexts.CREATE_MODELS);
+
     sendMessageCurrentClient(ServerMessageTypes.MODELS_WORKING_COMMANDS, MODELS_COMMANDS_FOR_HOST, webSocketClient);
 
     console.log("First client connected to server and get all commands!");
@@ -115,7 +134,7 @@ const handleClientCommand = (webSocketClient: WebSocket, commandID: string) => {
 
 export const hanldeClientLeave = (leavedClientID: string) => {
     if (clientsList[0].getID() === leavedClientID) {
-        stopModels();
+        board.stopModels();
 
         sendMessageAllClients(ServerMessageTypes.MESSAGE, ServerInfoMessageTexts.STOP_MODELS);
     }

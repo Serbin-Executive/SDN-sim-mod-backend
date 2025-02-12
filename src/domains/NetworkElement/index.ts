@@ -12,7 +12,7 @@ import {
     type TNetworkElementInitiator,
     type TTakeSignal,
     type TAgentsList,
-} from "../meta";
+} from "../../utils/constants";
 import { randomUUID } from "crypto";
 
 abstract class NetworkElement {
@@ -64,6 +64,7 @@ abstract class NetworkElement {
 
         sourceNetworkElement.setAgentsCount(sourceNetworkElement.agentsCount - 1);
         sourceNetworkElement.setAgentsLeftCount(sourceNetworkElement.agentsLeftCount + 1);
+        sourceNetworkElement.removeAgentFromList(newAgent);
 
         this.agentsList.push(newAgent);
 
@@ -79,6 +80,10 @@ abstract class NetworkElement {
 
     public getId(): TNetworkElementId {
         return this.id;
+    }
+
+    public getAgentsList(): TAgentsList {
+        return this.agentsList;
     }
 
     public getCapacity(): TNetworkElementCapacity {
@@ -123,6 +128,10 @@ abstract class NetworkElement {
         return this.nextElement;
     }
 
+    public setAgentsList(agentsList: TAgentsList): void {
+        this.agentsList = agentsList;
+    }
+
     public setCapacity(capacity: TNetworkElementCapacity): void {
         this.capacity = capacity;
     }
@@ -147,6 +156,10 @@ abstract class NetworkElement {
 
     public setNextElement(nextElement: TNextNetworkElement): void {
         this.nextElement = nextElement;
+    }
+
+    public removeAgentFromList(removedAgent: Agent): void {
+        this.agentsList = this.agentsList.filter((agent) => agent !== removedAgent);
     }
 }
 

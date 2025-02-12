@@ -1,0 +1,1 @@
+export const MILLISECONDS_MULTIPLIER: number = 1000;

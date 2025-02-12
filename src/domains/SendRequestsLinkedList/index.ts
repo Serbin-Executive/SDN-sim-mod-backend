@@ -1,4 +1,4 @@
-import { TBatchedFunction } from "../meta";
+import { TBatchedFunction } from "../../utils/constants";
 import { SendRequestsLinkedListNode } from "../SendRequestsLinkedListNode";
 
 export class SendRequestsLinkedList {
