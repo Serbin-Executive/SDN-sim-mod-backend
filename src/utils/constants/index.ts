@@ -4,7 +4,7 @@ import NetworkElement from "../../domains/NetworkElement";
 import Model from "../../domains/Model";
 import WebSocket from "ws";
 
-export const MODELS_COUNT_VALUE: number = 1;
+export const MODELS_COUNT_VALUE: number = 4;
 
 export const MIN_SPAWN_AGENTS_VALUE: number = 8;
 export const MAX_SPAWN_AGENTS_VALUE: number = 14;

@@ -4,10 +4,10 @@ import SourceElement from "../SourceElement";
 import QueueElement from "../QueueElement";
 import DelayElement from "../DelayElement";
 import SinkElement from "../SinkElement";
-import { TModelsList, TWorkTime, TModelsInterval, TModelID, STATISTIC_INTERVAL_VALUE, TObjectsStatesInfo, TStatesInfo, MODELS_COUNT_VALUE, addElementsInList, getPreviousElementsList, settingNextElementsInSequence, QUEUE_CAPACITY, DELAY_CAPACITY, DELAY_VALUE, WORK_INTERVAL_VALUE, TModelsLastStateInfo, IModelStateInfo, ServerMessageTypes } from "../../utils/constants";
-import { sendMessageAllClients } from "../../controllers/WebSocketController";
-import { TControllersList } from "./meta";
 import Controller from "../Controller";
+import { TModelsList, TWorkTime, TModelsInterval, TModelID, STATISTIC_INTERVAL_VALUE, MODELS_COUNT_VALUE, addElementsInList, getPreviousElementsList, settingNextElementsInSequence, QUEUE_CAPACITY, DELAY_CAPACITY, DELAY_VALUE, WORK_INTERVAL_VALUE, TModelsLastStateInfo, IModelStateInfo, ServerMessageTypes,  } from "../../utils/constants";
+import { TControllersList } from "./meta";
+import { TControllersStatesList } from "./meta";
 
 class Board {
     private modelsList: TModelsList;
@@ -17,6 +17,8 @@ class Board {
     private sendModelsStatisticTimer: TModelsInterval;
     private isModelsStart: boolean;
     private isModelsStop: boolean;
+    private sendingData: TControllersStatesList;
+    private sendFunction: any;
 
     constructor() {
         this.modelsList = [];
@@ -26,6 +28,8 @@ class Board {
         this.sendModelsStatisticTimer = null;
         this.isModelsStart = false;
         this.isModelsStop = true;
+        this.sendingData = [];
+        this.sendFunction = null;
     }
 
     public getModelsList(): TModelsList {
@@ -66,6 +70,14 @@ class Board {
         return this.isModelsStop;
     }
 
+    public getSendingData(): TControllersStatesList {
+        return this.sendingData;
+    }
+
+    public getSendFunction(): any {
+        return this.sendFunction;
+    }
+
     public getNeedSendModelsStatesInfo(modelsList: TModelsList): TModelsLastStateInfo {
         const needSendModelsStatesInfo: TModelsLastStateInfo = [];
 
@@ -77,18 +89,6 @@ class Board {
 
         return needSendModelsStatesInfo;
     }
-
-    // public getNeedSendModelsAgentsStatesInfo(modelsList: TModelsList): TObjectsStatesInfo {
-    //     const needSendModelsAgentsStatesInfo: TObjectsStatesInfo = [];
-
-    //     modelsList.forEach((model) => {
-    //         const needSendModelAgentsStatesInfo: TStatesInfo = model.getNeedSendServiceCompletedAgentsStatesInfo();
-
-    //         needSendModelsAgentsStatesInfo.push(needSendModelAgentsStatesInfo);
-    //     });
-
-    //     return needSendModelsAgentsStatesInfo;
-    // }
 
     public setModelsList(modelsList: TModelsList): void {
         this.modelsList = modelsList;
@@ -118,6 +118,14 @@ class Board {
         this.isModelsStop = isModelsStop;
     }
 
+    public setSendingData(sendingData: TControllersStatesList) {
+        this.sendingData = sendingData;
+    }
+
+    public setSendFunction(sendFunction: any) {
+        this.sendFunction = sendFunction;
+    }
+
     public addModelToBoard(model: Model): void {
         this.modelsList.push(model)
     }
@@ -130,6 +138,10 @@ class Board {
         this.modelsList.forEach((model) => {
             model.clearIntervalStatistic();
         })
+    }
+
+    public clearSendingData(): void {
+        this.sendingData = [];
     }
 
     public modelsIntervalAction(): void {
@@ -147,7 +159,7 @@ class Board {
     public statisticIntervalAction(): void {
         const needSendModelsStatesInfo = this.getNeedSendModelsStatesInfo(this.modelsList);
 
-        sendMessageAllClients(ServerMessageTypes.MODELS_STATES, needSendModelsStatesInfo);
+        this.sendFunction(ServerMessageTypes.MODELS_STATES, needSendModelsStatesInfo);
     }
 
     public createModels(): void {
@@ -210,6 +222,8 @@ class Board {
         if (this.isModelsStart) {
             return;
         }
+
+        this.clearSendingData();
     
         this.modelsWorkTimer = setInterval(() => this.modelsIntervalAction(), WORK_INTERVAL_VALUE);
         this.sendModelsStatisticTimer = setInterval(() => this.statisticIntervalAction(), STATISTIC_INTERVAL_VALUE);
@@ -250,8 +264,10 @@ class Board {
         console.log("\nSTOP SUCCESS\n");
 
         this.controllersList.forEach((controller) => {
+            this.sendingData.push(controller.getParametersStatesList());
+
             controller.printParametersLists();
-        })
+        });
     }
 }
 
