@@ -6,7 +6,9 @@ import SinkElement from "../SinkElement";
 import Agent from "../Agent";
 import { startDate } from "../..";
 import { randomUUID } from "crypto";
-import { IModelStateInfo, INetworElementState, ICurrentState, IStateInfoField, TWorkTime, getRandomArbitrary, MIN_SPAWN_AGENTS_VALUE, MAX_SPAWN_AGENTS_VALUE, TModelID, IModelStatistic, TModelStatesInfo, TObjectsStatesInfo, TStatesInfo, TStateInfo, TAgentsList } from "../../utils/constants";
+import { ICurrentState, TWorkTime } from "../meta";
+import { IModelStateInfo, IModelStatistic, INetworElementState, IStateInfoField, TModelID, TStateInfo } from "./meta";
+import { getRandomArbitrary, DEFAULT_MIN_SPAWN_AGENTS_VALUE, DEFAULT_MAX_SPAWN_AGENTS_VALUE } from "../../utils/constants";
 
 class Model {
     private ID: TModelID;
@@ -74,7 +76,7 @@ class Model {
     public spawnAgents(): void {
         const sourceElements = this.sourceElements;
         // for (let agentIndex = 0; agentIndex < SPAWN_AGENTS_VALUE; agentIndex++) {
-        for (let agentIndex = 0; agentIndex < getRandomArbitrary(MIN_SPAWN_AGENTS_VALUE, MAX_SPAWN_AGENTS_VALUE); agentIndex++) {
+        for (let agentIndex = 0; agentIndex < getRandomArbitrary(DEFAULT_MIN_SPAWN_AGENTS_VALUE, DEFAULT_MAX_SPAWN_AGENTS_VALUE); agentIndex++) {
             sourceElements.forEach((element) => {
                 const agent = new Agent();
 
@@ -129,28 +131,6 @@ class Model {
 
         return currentState;
     }
-
-    // public getNeedSendServiceCompletedAgentsStatesInfo(): TStatesInfo {
-    //     const serviceCompletedAgentsList: TAgentsList = [];
-
-    //     // this.sinkElements.forEach((sinkElement) => {
-    //     //     const elementAgentList: TAgentsList = sinkElement.getAgentsList();
-
-    //     //     elementAgentList.forEach((agent) => {
-    //     //         serviceCompletedAgentsList.push(agent);
-    //     //     });
-    //     // });
-
-
-        
-    //     const serviceCompletedAgentsStatesInfo: TStatesInfo = serviceCompletedAgentsList.map((agent) => {
-    //         const agentState = agent.getCurrentState();
-
-    //         return this.getStateInfo(agentState);
-    //     });
-
-    //     return serviceCompletedAgentsStatesInfo;
-    // }
 
     public setSourceElements(sourceElements: SourceElement[]): void {
         this.sourceElements = sourceElements;

@@ -5,9 +5,12 @@ import QueueElement from "../QueueElement";
 import DelayElement from "../DelayElement";
 import SinkElement from "../SinkElement";
 import Controller from "../Controller";
-import { TModelsList, TWorkTime, TModelsInterval, TModelID, STATISTIC_INTERVAL_VALUE, MODELS_COUNT_VALUE, addElementsInList, getPreviousElementsList, settingNextElementsInSequence, QUEUE_CAPACITY, DELAY_CAPACITY, DELAY_VALUE, WORK_INTERVAL_VALUE, TModelsLastStateInfo, IModelStateInfo, ServerMessageTypes,  } from "../../utils/constants";
-import { TControllersList } from "./meta";
+import { addElementsInList, DEFAULT_DELAY_CAPACITY, DEFAULT_DELAY_VALUE, DEFAULT_IS_PARTIAL_INITIAL_BOOT, DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE, DEFAULT_MAX_SPAWN_AGENTS_VALUE, DEFAULT_MIN_SPAWN_AGENTS_VALUE, DEFAULT_MODEL_SOURCE_ELEMENTS_COUNT_VALUE, DEFAULT_MODELS_COUNT_VALUE, DEFAULT_QUEUE_CAPACITY, DEFAULT_STATISTIC_INTERVAL_VALUE, DEFAULT_WORK_INTERVAL_VALUE, getPreviousElementsList, settingNextElementsInSequence} from "../../utils/constants";
+import { ISettingsConfig, TControllersList, TModelsInterval } from "./meta";
 import { TControllersStatesList } from "./meta";
+import { TModelsList, TWorkTime } from "../meta";
+import { IModelStateInfo, TModelID, TModelsLastStateInfo } from "../Model/meta";
+import { ServerMessageTypes } from "../../controllers/WebSocketController/meta";
 
 class Board {
     private modelsList: TModelsList;
@@ -19,6 +22,7 @@ class Board {
     private isModelsStop: boolean;
     private sendingData: TControllersStatesList;
     private sendFunction: any;
+    private settingsConfig: ISettingsConfig;
 
     constructor() {
         this.modelsList = [];
@@ -30,6 +34,19 @@ class Board {
         this.isModelsStop = true;
         this.sendingData = [];
         this.sendFunction = null;
+        this.settingsConfig = {
+            modelsCountValue: DEFAULT_MODELS_COUNT_VALUE,
+            minSpawnAgentsValue: DEFAULT_MIN_SPAWN_AGENTS_VALUE,
+            maxSpawnAgentsValue: DEFAULT_MAX_SPAWN_AGENTS_VALUE,
+            workIntervalValue: DEFAULT_WORK_INTERVAL_VALUE,
+            statisticIntervalValue: DEFAULT_STATISTIC_INTERVAL_VALUE,
+            modelSourceElementsCountValue: DEFAULT_MODEL_SOURCE_ELEMENTS_COUNT_VALUE,
+            queueCapacity: DEFAULT_QUEUE_CAPACITY,
+            delayCapacity: DEFAULT_DELAY_CAPACITY,
+            delayValue: DEFAULT_DELAY_VALUE,
+            isPartialInitialBoot: DEFAULT_IS_PARTIAL_INITIAL_BOOT,
+            isQualityOfServiceActive: DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE,
+        }
     }
 
     public getModelsList(): TModelsList {
@@ -90,6 +107,10 @@ class Board {
         return needSendModelsStatesInfo;
     }
 
+    public getSettingsConfig(): ISettingsConfig {
+        return this.settingsConfig;
+    }
+
     public setModelsList(modelsList: TModelsList): void {
         this.modelsList = modelsList;
     }
@@ -126,6 +147,20 @@ class Board {
         this.sendFunction = sendFunction;
     }
 
+    public updateSettingsConfig(newSettingsConfig: ISettingsConfig): void {
+        this.settingsConfig.modelsCountValue = newSettingsConfig.modelsCountValue;
+        this.settingsConfig.minSpawnAgentsValue = newSettingsConfig.minSpawnAgentsValue;
+        this.settingsConfig.maxSpawnAgentsValue = newSettingsConfig.maxSpawnAgentsValue;
+        this.settingsConfig.workIntervalValue = newSettingsConfig.workIntervalValue;
+        this.settingsConfig.statisticIntervalValue = newSettingsConfig.statisticIntervalValue;
+        this.settingsConfig.modelSourceElementsCountValue = newSettingsConfig.modelSourceElementsCountValue;
+        this.settingsConfig.queueCapacity = newSettingsConfig.queueCapacity;
+        this.settingsConfig.delayCapacity = newSettingsConfig.delayCapacity;
+        this.settingsConfig.delayValue = newSettingsConfig.delayValue;
+        this.settingsConfig.isPartialInitialBoot = newSettingsConfig.isPartialInitialBoot;
+        this.settingsConfig.isQualityOfServiceActive = newSettingsConfig.isQualityOfServiceActive;
+    }
+
     public addModelToBoard(model: Model): void {
         this.modelsList.push(model)
     }
@@ -151,7 +186,7 @@ class Board {
             model.spawnAgents();
         })
 
-        this.workTime += WORK_INTERVAL_VALUE;
+        this.workTime += this.settingsConfig.workIntervalValue;
 
         console.log(`\n\nWORK TIME: ${this.workTime} ms\n`);
     }
@@ -166,7 +201,7 @@ class Board {
         this.modelsList = [];
         this.controllersList = [];
 
-        for (let index = 0; index < MODELS_COUNT_VALUE; index++) {
+        for (let index = 0; index < this.settingsConfig.modelsCountValue; index++) {
             const newModel = new Model();
 
             const sourceElements: SourceElement[] = [];
@@ -193,12 +228,12 @@ class Board {
 
             settingNextElementsInSequence(networkElements);
 
-            queueElement.setCapacity(QUEUE_CAPACITY);
-            delayElement.setCapacity(DELAY_CAPACITY);
+            queueElement.setCapacity(this.settingsConfig.queueCapacity);
+            delayElement.setCapacity(this.settingsConfig.delayCapacity);
 
             queueElement.sendListenerInit();
             queueElement.setLostSinkElement(lostSinkElement);
-            delayElement.setDelayValue(DELAY_VALUE);
+            delayElement.setDelayValue(this.settingsConfig.delayValue);
 
             newModel.setSourceElements(sourceElements);
             newModel.setNetworkElements(networkElements);
@@ -225,8 +260,8 @@ class Board {
 
         this.clearSendingData();
     
-        this.modelsWorkTimer = setInterval(() => this.modelsIntervalAction(), WORK_INTERVAL_VALUE);
-        this.sendModelsStatisticTimer = setInterval(() => this.statisticIntervalAction(), STATISTIC_INTERVAL_VALUE);
+        this.modelsWorkTimer = setInterval(() => this.modelsIntervalAction(), this.settingsConfig.workIntervalValue);
+        this.sendModelsStatisticTimer = setInterval(() => this.statisticIntervalAction(), this.settingsConfig.statisticIntervalValue);
 
         this.controllersList.forEach((controller) => controller.start());
 

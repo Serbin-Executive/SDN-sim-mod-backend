@@ -1,5 +1,5 @@
 import WebSocket from "ws";
-import { TClientSocket, TClientID } from "../../utils/constants";
+import { TClientID, TClientSocket } from "./meta";
 
 export class Client {
     private socket: TClientSocket;

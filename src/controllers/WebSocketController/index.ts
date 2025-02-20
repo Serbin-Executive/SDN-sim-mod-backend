@@ -1,20 +1,24 @@
 import WebSocket from "ws";
 import Board from "../../domains/Board";
-import { ModelsWorkingCommands, ModelsCommandsForHost, IServerMessage, ServerMessageTypes, IActionConfig, ServerInfoMessageTexts, WEB_CLIENT_PORT, WORK_INTERVAL_VALUE, STATISTIC_INTERVAL_VALUE } from "../../utils/constants";
 import { Client } from "../../domains/Client";
 import { randomUUID } from "crypto";
+import { IActionConfig, IServerMessage, ModelsCommandsForHost, ModelsWorkingCommands, ServerInfoMessageTexts, ServerMessageTypes } from "./meta";
+import { DEFAULT_DELAY_CAPACITY, DEFAULT_DELAY_VALUE, DEFAULT_IS_PARTIAL_INITIAL_BOOT, DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE, DEFAULT_MAX_SPAWN_AGENTS_VALUE, DEFAULT_MIN_SPAWN_AGENTS_VALUE, DEFAULT_MODEL_SOURCE_ELEMENTS_COUNT_VALUE, DEFAULT_MODELS_COUNT_VALUE, DEFAULT_QUEUE_CAPACITY, DEFAULT_STATISTIC_INTERVAL_VALUE, DEFAULT_WORK_INTERVAL_VALUE, WEB_CLIENT_PORT } from "../../utils/constants";
+import { ISettingsConfig } from "../../domains/Board/meta";
 
-// export const createModelsByHostCommand = (board: Board): void => {
-//     board.createModels();
-// }
-
-// export const startModels = (board: Board): void => {
-//     board.startModels()
-// }
-
-//  export const stopModels = (board: Board): void => {
-//     board.stopModels();
-//  }
+let loadedBoardSettingsConfig: ISettingsConfig = {
+    modelsCountValue: DEFAULT_MODELS_COUNT_VALUE,
+    minSpawnAgentsValue: DEFAULT_MIN_SPAWN_AGENTS_VALUE,
+    maxSpawnAgentsValue: DEFAULT_MAX_SPAWN_AGENTS_VALUE,
+    workIntervalValue: DEFAULT_WORK_INTERVAL_VALUE,
+    statisticIntervalValue: DEFAULT_STATISTIC_INTERVAL_VALUE,
+    modelSourceElementsCountValue: DEFAULT_MODEL_SOURCE_ELEMENTS_COUNT_VALUE,
+    queueCapacity: DEFAULT_QUEUE_CAPACITY,
+    delayCapacity: DEFAULT_DELAY_CAPACITY,
+    delayValue: DEFAULT_DELAY_VALUE,
+    isPartialInitialBoot: DEFAULT_IS_PARTIAL_INITIAL_BOOT,
+    isQualityOfServiceActive: DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE,
+};
 
 export const WebSocketController = (board: Board, startDate: Date) => {
     let clientsList: Client[] = [];
@@ -62,13 +66,15 @@ export const WebSocketController = (board: Board, startDate: Date) => {
 
     const ActionsConfigsList: Record<ModelsWorkingCommands, IActionConfig> = {
         [ModelsWorkingCommands.CREATE]: {
-            modelActionFunction: () => { board.createModels() },
+            updateBoardFunction: () => { board.updateSettingsConfig(loadedBoardSettingsConfig) },
+            boardActionFunction: () => { board.createModels() },
             clientSendActionFunctions: [],
             allClientsSendActionFunctions: [],
             infoMessage: ServerInfoMessageTexts.CREATE_MODELS,
         },
         [ModelsWorkingCommands.START]: {
-            modelActionFunction: () => {
+            updateBoardFunction: null,
+            boardActionFunction: () => {
                 board.startModels();
                 startDate = new Date();
             },
@@ -78,15 +84,16 @@ export const WebSocketController = (board: Board, startDate: Date) => {
             infoMessage: ServerInfoMessageTexts.START_MODELS,
         },
         [ModelsWorkingCommands.STOP]: {
-            modelActionFunction: () => { board.stopModels() },
+            updateBoardFunction: null,
+            boardActionFunction: () => { board.stopModels() },
             clientSendActionFunctions: [sendModelsActionsStates],
             allClientsSendActionFunctions: [],
             infoMessage: ServerInfoMessageTexts.STOP_MODELS,
         },
     }
 
-    const modelAction = (modelActionFunction: () => void, clientSendActionFunctions: any[], allClientsSendActionFunctions: any[], webSocketClient: WebSocket, infoMessage: string): void => {
-        modelActionFunction();
+    const boardAction = (boardActionFunction: () => void, clientSendActionFunctions: any[], allClientsSendActionFunctions: any[], webSocketClient: WebSocket, infoMessage: string): void => {
+        boardActionFunction();
 
         clientSendActionFunctions.forEach((clientSendActionFunction) => {
             clientSendActionFunction(webSocketClient);
@@ -111,7 +118,7 @@ export const WebSocketController = (board: Board, startDate: Date) => {
 
         clientsList.push(client);
 
-        modelAction(() => { board.createModels() }, [], [], webSocketClient, ServerInfoMessageTexts.CREATE_MODELS);
+        boardAction(() => { board.createModels() }, [], [], webSocketClient, ServerInfoMessageTexts.CREATE_MODELS);
 
         sendMessageCurrentClient(ServerMessageTypes.MODELS_WORKING_COMMANDS, MODELS_COMMANDS_FOR_HOST, webSocketClient);
 
@@ -126,12 +133,12 @@ export const WebSocketController = (board: Board, startDate: Date) => {
 
         const actionConfigure: IActionConfig = ActionsConfigsList[commandID as ModelsWorkingCommands];
 
-        const modelActionFunction = actionConfigure.modelActionFunction;
+        const modelActionFunction = actionConfigure.boardActionFunction;
         const clientSendActionFunction = actionConfigure.clientSendActionFunctions;
         const allClientsSendActionFunctions = actionConfigure.allClientsSendActionFunctions;
         const actionInfoMessage = actionConfigure.infoMessage;
 
-        modelAction(modelActionFunction, clientSendActionFunction, allClientsSendActionFunctions, webSocketClient, actionInfoMessage);
+        boardAction(modelActionFunction, clientSendActionFunction, allClientsSendActionFunctions, webSocketClient, actionInfoMessage);
     }
 
     const hanldeClientLeave = (leavedClientID: string) => {
@@ -165,9 +172,10 @@ export const WebSocketController = (board: Board, startDate: Date) => {
             webSocketClientSetup(webSocketClient, newClient);
 
             webSocketClient.on('message', (event) => {
-                const parsedString = event.toString("utf-8");
+                console.log(event);
+                // const parsedString = event.toString("utf-8");
 
-                handleClientCommand(webSocketClient, parsedString);
+                // handleClientCommand(webSocketClient, parsedString);
             });
             webSocketClient.on('close', () => { hanldeClientLeave(clientID) });
             webSocketClient.on("error", getWebSocketErrorStatus);

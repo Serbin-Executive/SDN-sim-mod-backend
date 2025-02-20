@@ -1,7 +1,8 @@
-import { randomUUID } from "crypto";
 import ControllerParametersService from "../../services/ControllerParametersService";
-import { TModelsInterval, TWorkTime } from "../../utils/constants";
+import { randomUUID } from "crypto";
 import { CONTROLLER_CHECK_INTERVAL_TIME, TControllerID, TServicedModel, TControllerParameter, TParametersStatesList } from "./meta";
+import { TWorkTime } from "../meta";
+import { TModelsInterval } from "../Board/meta";
 
 class Controller {
     private ID: TControllerID;
