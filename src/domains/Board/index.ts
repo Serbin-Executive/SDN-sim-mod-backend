@@ -8,14 +8,15 @@ import Controller from "../Controller";
 import { addElementsInList, DEFAULT_DELAY_CAPACITY, DEFAULT_DELAY_VALUE, DEFAULT_IS_PARTIAL_INITIAL_BOOT, DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE, DEFAULT_MAX_SPAWN_AGENTS_VALUE, DEFAULT_MIN_SPAWN_AGENTS_VALUE, DEFAULT_MODEL_SOURCE_ELEMENTS_COUNT_VALUE, DEFAULT_MODELS_COUNT_VALUE, DEFAULT_QUEUE_CAPACITY, DEFAULT_STATISTIC_INTERVAL_VALUE, DEFAULT_WORK_INTERVAL_VALUE, getPreviousElementsList, settingNextElementsInSequence} from "../../utils/constants";
 import { ISettingsConfig, TControllersList, TModelsInterval } from "./meta";
 import { TControllersStatesList } from "./meta";
-import { TModelsList, TWorkTime } from "../meta";
+import { TModelsList, TBoardTime } from "../meta";
 import { IModelStateInfo, TModelID, TModelsLastStateInfo } from "../Model/meta";
 import { ServerMessageTypes } from "../../controllers/WebSocketController/meta";
 
 class Board {
     private modelsList: TModelsList;
     private controllersList: TControllersList;
-    private workTime: TWorkTime;
+    private workTime: TBoardTime;
+    private statisticTime: TBoardTime;
     private modelsWorkTimer: TModelsInterval;
     private sendModelsStatisticTimer: TModelsInterval;
     private isModelsStart: boolean;
@@ -28,6 +29,7 @@ class Board {
         this.modelsList = [];
         this.controllersList = [];
         this.workTime = 0;
+        this.statisticTime = 0;
         this.modelsWorkTimer = null;
         this.sendModelsStatisticTimer = null;
         this.isModelsStart = false;
@@ -67,8 +69,12 @@ class Board {
         return currentModel;
     }
 
-    public getWorkTime(): TWorkTime {
+    public getWorkTime(): TBoardTime {
         return this.workTime;
+    }
+
+    public getStatisticTime(): TBoardTime {
+        return this.statisticTime;
     }
 
     public getModelsWorkTimer(): TModelsInterval {
@@ -99,7 +105,7 @@ class Board {
         const needSendModelsStatesInfo: TModelsLastStateInfo = [];
 
         modelsList.forEach((model) => {
-            const needSendModelStateInfo: IModelStateInfo = model.getModelStateInfo(this.workTime);
+            const needSendModelStateInfo: IModelStateInfo = model.getModelStateInfo(this.statisticTime);
 
             needSendModelsStatesInfo.push(needSendModelStateInfo);
         })
@@ -119,8 +125,12 @@ class Board {
         this.controllersList = controllersList;
     }
 
-    public setWorkTime(workTime: TWorkTime): void {
+    public setWorkTime(workTime: TBoardTime): void {
         this.workTime = workTime;
+    }
+
+    public setStatisticTime(statisticTime: TBoardTime): void {
+        this.statisticTime = statisticTime;
     }
 
     public setModelsWorkTimer(modelsWorkTimer: TModelsInterval): void {
@@ -192,6 +202,8 @@ class Board {
     }
 
     public statisticIntervalAction(): void {
+        this.statisticTime += this.settingsConfig.statisticIntervalValue;
+
         const needSendModelsStatesInfo = this.getNeedSendModelsStatesInfo(this.modelsList);
 
         this.sendFunction(ServerMessageTypes.MODELS_STATES, needSendModelsStatesInfo);

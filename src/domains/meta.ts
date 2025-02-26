@@ -38,7 +38,7 @@ export type TAgentsList = Agent[];
 export type TModelsAgentsList = TAgentsList[];
 
 export type TModelsList = Model[];
-export type TWorkTime = number;
+export type TBoardTime = number;
 
 export type TModelsStatesInfo = TModelStatesInfo[];
 

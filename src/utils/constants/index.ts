@@ -1,12 +1,12 @@
 import NetworkElement from "../../domains/NetworkElement";
 import { TPreviousNetworkElements } from "../../domains/meta";
 
-export const DEFAULT_MODELS_COUNT_VALUE: number = 4;
+export const DEFAULT_MODELS_COUNT_VALUE: number = 1;
 
 export const DEFAULT_MIN_SPAWN_AGENTS_VALUE: number = 8;
 export const DEFAULT_MAX_SPAWN_AGENTS_VALUE: number = 14;
 export const DEFAULT_WORK_INTERVAL_VALUE: number = 2000;
-export const DEFAULT_STATISTIC_INTERVAL_VALUE: number = 5000;
+export const DEFAULT_STATISTIC_INTERVAL_VALUE: number = 1000;
 export const DEFAULT_MODEL_SOURCE_ELEMENTS_COUNT_VALUE: number = 1;
 export const DEFAULT_QUEUE_CAPACITY: number = 10;
 export const DEFAULT_DELAY_CAPACITY: number = 5;

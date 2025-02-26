@@ -172,10 +172,10 @@ export const WebSocketController = (board: Board, startDate: Date) => {
             webSocketClientSetup(webSocketClient, newClient);
 
             webSocketClient.on('message', (event) => {
-                console.log(event);
-                // const parsedString = event.toString("utf-8");
+                // console.log(event);
+                const parsedString = event.toString("utf-8");
 
-                // handleClientCommand(webSocketClient, parsedString);
+                handleClientCommand(webSocketClient, parsedString);
             });
             webSocketClient.on('close', () => { hanldeClientLeave(clientID) });
             webSocketClient.on("error", getWebSocketErrorStatus);

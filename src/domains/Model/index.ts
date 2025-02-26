@@ -6,7 +6,7 @@ import SinkElement from "../SinkElement";
 import Agent from "../Agent";
 import { startDate } from "../..";
 import { randomUUID } from "crypto";
-import { ICurrentState, TWorkTime } from "../meta";
+import { ICurrentState, TBoardTime } from "../meta";
 import { IModelStateInfo, IModelStatistic, INetworElementState, IStateInfoField, TModelID, TStateInfo } from "./meta";
 import { getRandomArbitrary, DEFAULT_MIN_SPAWN_AGENTS_VALUE, DEFAULT_MAX_SPAWN_AGENTS_VALUE } from "../../utils/constants";
 
@@ -93,7 +93,7 @@ class Model {
         }
     }
 
-    public getModelStateInfo = (workTime: TWorkTime): IModelStateInfo => {
+    public getModelStateInfo = (workTime: TBoardTime): IModelStateInfo => {
         const networkElements = this.networkElements;
         console.log(`Model ID: ${this.ID}\n`);
 
