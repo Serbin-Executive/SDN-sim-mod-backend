@@ -9,6 +9,7 @@ import { randomUUID } from "crypto";
 import { ICurrentState, TBoardTime } from "../meta";
 import { IModelStateInfo, IModelStatistic, INetworElementState, IStateInfoField, TModelID, TStateInfo } from "./meta";
 import { getRandomArbitrary, DEFAULT_MIN_SPAWN_AGENTS_VALUE, DEFAULT_MAX_SPAWN_AGENTS_VALUE } from "../../utils/constants";
+import ModelStatisticService from "../../services/ModelStatisticService";
 
 class Model {
     private ID: TModelID;
@@ -59,19 +60,19 @@ class Model {
         return this.statistic;
     }
 
-    private getStateInfo = (state: ICurrentState): TStateInfo => {
-        const statesListInfo: TStateInfo = Object.entries(state).map(([fieldName, fieldValue]) => {
+    // private getStateInfo = (state: ICurrentState): TStateInfo => {
+    //     const statesListInfo: TStateInfo = Object.entries(state).map(([fieldName, fieldValue]) => {
 
-            const stateField: IStateInfoField = {
-                fieldName: fieldName,
-                fieldValue: String(fieldValue),
-            };
+    //         const stateField: IStateInfoField = {
+    //             fieldName: fieldName,
+    //             fieldValue: String(fieldValue),
+    //         };
 
-            return stateField;
-        })
+    //         return stateField;
+    //     })
 
-        return statesListInfo;
-    }
+    //     return statesListInfo;
+    // }
 
     public spawnAgents(): void {
         const sourceElements = this.sourceElements;
@@ -95,6 +96,8 @@ class Model {
 
     public getModelStateInfo = (workTime: TBoardTime): IModelStateInfo => {
         const networkElements = this.networkElements;
+
+        console.log("\n\n\n");
         console.log(`Model ID: ${this.ID}\n`);
 
         const currentState: IModelStateInfo = {
@@ -130,6 +133,12 @@ class Model {
         });
 
         return currentState;
+    }
+
+    public getLoadFactor(workTime: TBoardTime, delayValueToIntervalValueMultiplier: number): number {
+        const currentModelStateInfo = this.getModelStateInfo(workTime);
+
+        return ModelStatisticService.getLoadFactor(currentModelStateInfo, delayValueToIntervalValueMultiplier);
     }
 
     public setSourceElements(sourceElements: SourceElement[]): void {

@@ -5,8 +5,9 @@ import QueueElement from "../QueueElement";
 import DelayElement from "../DelayElement";
 import SinkElement from "../SinkElement";
 import Controller from "../Controller";
-import { addElementsInList, DEFAULT_DELAY_CAPACITY, DEFAULT_DELAY_VALUE, DEFAULT_IS_PARTIAL_INITIAL_BOOT, DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE, DEFAULT_MAX_SPAWN_AGENTS_VALUE, DEFAULT_MIN_SPAWN_AGENTS_VALUE, DEFAULT_MODEL_SOURCE_ELEMENTS_COUNT_VALUE, DEFAULT_MODELS_COUNT_VALUE, DEFAULT_QUEUE_CAPACITY, DEFAULT_STATISTIC_INTERVAL_VALUE, DEFAULT_WORK_INTERVAL_VALUE, getPreviousElementsList, settingNextElementsInSequence} from "../../utils/constants";
-import { ISettingsConfig, TControllersList, TModelsInterval } from "./meta";
+import Balancer from "../Balancer";
+import { addElementsInList, DEFAULT_DELAY_CAPACITY, DEFAULT_DELAY_VALUE, DEFAULT_IS_PARTIAL_INITIAL_BOOT, DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE, DEFAULT_JITTER_DANGER_VALUE, DEFAULT_LOAD_FACTOR_DANGER_VALUE, DEFAULT_MAX_SPAWN_AGENTS_VALUE, DEFAULT_MIN_SPAWN_AGENTS_VALUE, DEFAULT_MODEL_SOURCE_ELEMENTS_COUNT_VALUE, DEFAULT_MODELS_COUNT_VALUE, DEFAULT_PING_DANGER_VALUE, DEFAULT_QUEUE_CAPACITY, DEFAULT_STATISTIC_INTERVAL_VALUE, DEFAULT_WORK_INTERVAL_VALUE, getPreviousElementsList, settingNextElementsInSequence } from "../../utils/constants";
+import { ISettingsConfig, TBoardBalancer, TControllersList, TModelsInterval } from "./meta";
 import { TControllersStatesList } from "./meta";
 import { TModelsList, TBoardTime } from "../meta";
 import { IModelStateInfo, TModelID, TModelsLastStateInfo } from "../Model/meta";
@@ -15,6 +16,7 @@ import { ServerMessageTypes } from "../../controllers/WebSocketController/meta";
 class Board {
     private modelsList: TModelsList;
     private controllersList: TControllersList;
+    private balancer: TBoardBalancer;
     private workTime: TBoardTime;
     private statisticTime: TBoardTime;
     private modelsWorkTimer: TModelsInterval;
@@ -28,6 +30,7 @@ class Board {
     constructor() {
         this.modelsList = [];
         this.controllersList = [];
+        this.balancer = null;
         this.workTime = 0;
         this.statisticTime = 0;
         this.modelsWorkTimer = null;
@@ -48,6 +51,9 @@ class Board {
             delayValue: DEFAULT_DELAY_VALUE,
             isPartialInitialBoot: DEFAULT_IS_PARTIAL_INITIAL_BOOT,
             isQualityOfServiceActive: DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE,
+            loadFactorDangerValue: DEFAULT_LOAD_FACTOR_DANGER_VALUE,
+            pingDangerValue: DEFAULT_PING_DANGER_VALUE,
+            jitterDangerValue: DEFAULT_JITTER_DANGER_VALUE,
         }
     }
 
@@ -57,6 +63,10 @@ class Board {
 
     public getControllersList(): TControllersList {
         return this.controllersList;
+    }
+
+    public getBalancer(): TBoardBalancer {
+        return this.balancer;
     }
 
     public getModelById(modelId: TModelID): Model {
@@ -120,9 +130,13 @@ class Board {
     public setModelsList(modelsList: TModelsList): void {
         this.modelsList = modelsList;
     }
-    
+
     public setControllersList(controllersList: TControllersList): void {
         this.controllersList = controllersList;
+    }
+
+    public setBalancer(balancer: Balancer): void {
+        this.balancer = balancer;
     }
 
     public setWorkTime(workTime: TBoardTime): void {
@@ -171,11 +185,11 @@ class Board {
         this.settingsConfig.isQualityOfServiceActive = newSettingsConfig.isQualityOfServiceActive;
     }
 
-    public addModelToBoard(model: Model): void {
+    public addModel(model: Model): void {
         this.modelsList.push(model)
     }
 
-    public addControllerToBoard(controller: Controller): void {
+    public addController(controller: Controller): void {
         this.controllersList.push(controller);
     }
 
@@ -187,6 +201,18 @@ class Board {
 
     public clearSendingData(): void {
         this.sendingData = [];
+    }
+
+    public balancerCheck(): void {
+        if (!this.balancer) {
+            throw new Error("Cannot complete statistic interval action, balancer is undefined");
+        }
+
+        const { delayValue, workIntervalValue, maxSpawnAgentsValue, loadFactorDangerValue, pingDangerValue, jitterDangerValue } = this.settingsConfig;
+
+        const delayValueToIntervalValueMultiplier = workIntervalValue / delayValue;
+
+        this.balancer.checkModelsLoadFactors(this.statisticTime, delayValueToIntervalValueMultiplier, loadFactorDangerValue, maxSpawnAgentsValue, pingDangerValue, jitterDangerValue);
     }
 
     public modelsIntervalAction(): void {
@@ -204,14 +230,18 @@ class Board {
     public statisticIntervalAction(): void {
         this.statisticTime += this.settingsConfig.statisticIntervalValue;
 
+        this.balancerCheck();
+
         const needSendModelsStatesInfo = this.getNeedSendModelsStatesInfo(this.modelsList);
 
         this.sendFunction(ServerMessageTypes.MODELS_STATES, needSendModelsStatesInfo);
     }
 
-    public createModels(): void {
+    public create(): void {
         this.modelsList = [];
         this.controllersList = [];
+
+        this.balancer = new Balancer();
 
         for (let index = 0; index < this.settingsConfig.modelsCountValue; index++) {
             const newModel = new Model();
@@ -253,25 +283,26 @@ class Board {
             newModel.setDelayElements(delayElements);
             newModel.setSinkElement(sinkElement);
 
-            this.addModelToBoard(newModel);
+            this.addModel(newModel);
 
             const newController = new Controller();
 
             newController.setServicedModel(newModel);
 
-            this.addControllerToBoard(newController);
+            this.addController(newController);
+            this.balancer.addController(newController);
 
             console.log("\nCREATE SUCCESS\n");
         }
     }
 
-    public startModels(): void {
+    public start(): void {
         if (this.isModelsStart) {
             return;
         }
 
         this.clearSendingData();
-    
+
         this.modelsWorkTimer = setInterval(() => this.modelsIntervalAction(), this.settingsConfig.workIntervalValue);
         this.sendModelsStatisticTimer = setInterval(() => this.statisticIntervalAction(), this.settingsConfig.statisticIntervalValue);
 
@@ -283,7 +314,7 @@ class Board {
         console.log("\nSTART SUCCESS\n");
     }
 
-    public stopModels(): void {
+    public stop(): void {
         if (this.isModelsStop) {
             return;
         }

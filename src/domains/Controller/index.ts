@@ -1,6 +1,6 @@
 import ControllerParametersService from "../../services/ControllerParametersService";
 import { randomUUID } from "crypto";
-import { CONTROLLER_CHECK_INTERVAL_TIME, TControllerID, TServicedModel, TControllerParameter, TParametersStatesList } from "./meta";
+import { CONTROLLER_CHECK_INTERVAL_TIME, TControllerID, TServicedModel, TControllerParameter, TParametersStatesList, IParametersState, MAX_PARAMETER_LOAD_VALUE, DEFAULT_PARAMETERS_DANGER_VALUE } from "./meta";
 import { TBoardTime } from "../meta";
 import { TModelsInterval } from "../Board/meta";
 
@@ -35,6 +35,31 @@ class Controller {
         return this.parametersStatesList;
     }
 
+    public getParametersState(workTime: TBoardTime): IParametersState {
+        const servicedModel = this.servicedModel;
+
+        if (!servicedModel) {
+            throw new Error("Cannot get controller parameters state, serviced model is undefined");
+        }
+
+        const modelSinkElement = servicedModel.getSinkElement();
+
+        if (!modelSinkElement) {
+            throw new Error("Cannot get controller parameters state, model sink element in undefined");
+        }
+
+        return {
+            time: workTime,
+            CPU: ControllerParametersService.getCPU(servicedModel.getSourceElements()),
+            usedDiskSpace: ControllerParametersService.getUsedDiskSpace(servicedModel.getQueueElements()),
+            memoryUsage: ControllerParametersService.getMemoryUsage(servicedModel.getQueueElements(), servicedModel.getDelayElements()),
+            networkTraffic: ControllerParametersService.getNetworkTraffic(servicedModel.getSourceElements()),
+            packetLost: ControllerParametersService.getPacketLost(modelSinkElement, servicedModel.getQueueElements()),
+            ping: ControllerParametersService.getPing(modelSinkElement),
+            jitter: ControllerParametersService.getJitter(modelSinkElement),
+        }
+    }
+
     public setServicedModel(servicedModel: TServicedModel): void {
         this.servicedModel = servicedModel;
     }
@@ -47,52 +72,30 @@ class Controller {
         this.parametersStatesList = parametersStatesList;
     }
 
-    public printParameters(lastTime: TControllerParameter, lastUsedDiskSpace: TControllerParameter, memoryUsage: TControllerParameter, lastNetworkTraffic: TControllerParameter, lastPacketLost: TControllerParameter, lastPing: TControllerParameter, lastJitter: TControllerParameter, lastCPU: TControllerParameter): void {
+    public printParameters(lastParametersState: IParametersState): void {
+        const {time, usedDiskSpace, memoryUsage, networkTraffic, packetLost, ping, jitter, CPU} = lastParametersState;
+
+        console.log("\n\n\n");
         console.log(`Model ID: ${this.servicedModel?.getID()}\n`);
-        console.log("TIME: ", lastTime);
-        console.log("USED DISK SPACE: ", lastUsedDiskSpace);
+        console.log("TIME: ", time);
+        console.log("USED DISK SPACE: ", usedDiskSpace);
         console.log("MEMORY USAGE: ", memoryUsage);
-        console.log("NETWORK TRAFFIC: ", lastNetworkTraffic);
-        console.log("PACKET LOST: ", lastPacketLost);
-        console.log("PING: ", lastPing);
-        console.log("JITTER: ", lastJitter);
-        console.log("CPU: ", lastCPU);
+        console.log("NETWORK TRAFFIC: ", networkTraffic);
+        console.log("PACKET LOST: ", packetLost);
+        console.log("PING: ", ping);
+        console.log("JITTER: ", jitter);
+        console.log("CPU: ", CPU);
         console.log();
     }
 
     public checkIntervalAction(): void {
-        if (!this.servicedModel) {
-            throw new Error("Cannot controller check, serviced model is undefined");
-        }
-
-        const modelSinkElement = this.servicedModel.getSinkElement();
-
-        if (!modelSinkElement) {
-            throw new Error("Cannot controller check, model sink element in undefined");
-        }
-
-        const newUsedDiskSpace = ControllerParametersService.getUsedDiskSpace(this.servicedModel.getQueueElements());
-        const newMemoryUsage = ControllerParametersService.getMemoryUsage(this.servicedModel.getQueueElements(), this.servicedModel.getDelayElements());
-        const newNetworkTraffic = ControllerParametersService.getNetworkTraffic(this.servicedModel.getSourceElements());
-        const newPacketLost = ControllerParametersService.getPacketLost(modelSinkElement, this.servicedModel.getQueueElements());
-        const newPing = ControllerParametersService.getPing(modelSinkElement);
-        const newJitter = ControllerParametersService.getJitter(modelSinkElement);
-        const newCPU = ControllerParametersService.getCPU(this.servicedModel.getSourceElements());
-
         this.workTime += CONTROLLER_CHECK_INTERVAL_TIME;
 
-        this.parametersStatesList.push({
-            time: this.workTime,
-            CPU: newCPU,
-            usedDiskSpace: newUsedDiskSpace,
-            memoryUsage: newMemoryUsage,
-            networkTraffic: newNetworkTraffic,
-            packetLost: newPacketLost,
-            ping: newPing,
-            jitter: newJitter,
-        });
+        const newParametersState = this.getParametersState(this.workTime)
 
-        this.printParameters(this.workTime, newUsedDiskSpace, newMemoryUsage, newNetworkTraffic, newPacketLost,newPing, newJitter, newCPU);
+        this.parametersStatesList.push(newParametersState);
+
+        this.printParameters(newParametersState);
     }
 
     public start(): void {
@@ -107,11 +110,30 @@ class Controller {
         clearInterval(this.checkTimer);
     }
 
+    public getParametersAmount(workTime: TBoardTime, maxSpawnAgentsValue: number, pingDangerValue: number, jitterDangerValue: number): number {
+        let parametersAmount: number = 0;
+
+        const {usedDiskSpace, memoryUsage, networkTraffic, packetLost, ping, jitter, CPU} = this.getParametersState(workTime);
+
+        parametersAmount += MAX_PARAMETER_LOAD_VALUE * ( usedDiskSpace / DEFAULT_PARAMETERS_DANGER_VALUE );
+        parametersAmount += MAX_PARAMETER_LOAD_VALUE * ( memoryUsage / DEFAULT_PARAMETERS_DANGER_VALUE );
+        parametersAmount += MAX_PARAMETER_LOAD_VALUE * ( networkTraffic / maxSpawnAgentsValue );
+        parametersAmount += MAX_PARAMETER_LOAD_VALUE * ( packetLost / DEFAULT_PARAMETERS_DANGER_VALUE );
+        parametersAmount += MAX_PARAMETER_LOAD_VALUE * ( ping / pingDangerValue );
+        parametersAmount += MAX_PARAMETER_LOAD_VALUE * ( jitter / jitterDangerValue );
+        parametersAmount += MAX_PARAMETER_LOAD_VALUE * ( CPU / DEFAULT_PARAMETERS_DANGER_VALUE );
+
+        return parametersAmount;
+    }
+
     public printParametersLists(): void {
+        console.log("\n\n\n");
         console.log(`CONTROLLER ${this.ID}\n`)
+
         this.parametersStatesList.forEach((parametersState) => {
             console.log(JSON.stringify(parametersState, null, 2));
         });
+
         console.log();
     }
 }

@@ -1,8 +1,11 @@
+import Balancer from "../Balancer";
 import Controller from "../Controller";
 import { TParametersStatesList } from "../Controller/meta";
 
 export type TControllersList = Controller[];
 export type TControllersStatesList = TParametersStatesList[];
+
+export type TBoardBalancer = Balancer | null;
 
 export type TModelsInterval = NodeJS.Timer | null;
 
@@ -18,4 +21,7 @@ export interface ISettingsConfig {
     delayValue: number;
     isPartialInitialBoot: boolean;
     isQualityOfServiceActive: boolean;
+    loadFactorDangerValue: number;
+    pingDangerValue: number;
+    jitterDangerValue: number;
 }

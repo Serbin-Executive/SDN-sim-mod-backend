@@ -3,7 +3,7 @@ import Board from "../../domains/Board";
 import { Client } from "../../domains/Client";
 import { randomUUID } from "crypto";
 import { IActionConfig, IServerMessage, ModelsCommandsForHost, ModelsWorkingCommands, ServerInfoMessageTexts, ServerMessageTypes } from "./meta";
-import { DEFAULT_DELAY_CAPACITY, DEFAULT_DELAY_VALUE, DEFAULT_IS_PARTIAL_INITIAL_BOOT, DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE, DEFAULT_MAX_SPAWN_AGENTS_VALUE, DEFAULT_MIN_SPAWN_AGENTS_VALUE, DEFAULT_MODEL_SOURCE_ELEMENTS_COUNT_VALUE, DEFAULT_MODELS_COUNT_VALUE, DEFAULT_QUEUE_CAPACITY, DEFAULT_STATISTIC_INTERVAL_VALUE, DEFAULT_WORK_INTERVAL_VALUE, WEB_CLIENT_PORT } from "../../utils/constants";
+import { DEFAULT_DELAY_CAPACITY, DEFAULT_DELAY_VALUE, DEFAULT_IS_PARTIAL_INITIAL_BOOT, DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE, DEFAULT_JITTER_DANGER_VALUE, DEFAULT_LOAD_FACTOR_DANGER_VALUE, DEFAULT_MAX_SPAWN_AGENTS_VALUE, DEFAULT_MIN_SPAWN_AGENTS_VALUE, DEFAULT_MODEL_SOURCE_ELEMENTS_COUNT_VALUE, DEFAULT_MODELS_COUNT_VALUE, DEFAULT_PING_DANGER_VALUE, DEFAULT_QUEUE_CAPACITY, DEFAULT_STATISTIC_INTERVAL_VALUE, DEFAULT_WORK_INTERVAL_VALUE, WEB_CLIENT_PORT } from "../../utils/constants";
 import { ISettingsConfig } from "../../domains/Board/meta";
 
 let loadedBoardSettingsConfig: ISettingsConfig = {
@@ -18,6 +18,9 @@ let loadedBoardSettingsConfig: ISettingsConfig = {
     delayValue: DEFAULT_DELAY_VALUE,
     isPartialInitialBoot: DEFAULT_IS_PARTIAL_INITIAL_BOOT,
     isQualityOfServiceActive: DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE,
+    loadFactorDangerValue: DEFAULT_LOAD_FACTOR_DANGER_VALUE,
+    pingDangerValue: DEFAULT_PING_DANGER_VALUE,
+    jitterDangerValue: DEFAULT_JITTER_DANGER_VALUE,
 };
 
 export const WebSocketController = (board: Board, startDate: Date) => {
@@ -67,7 +70,7 @@ export const WebSocketController = (board: Board, startDate: Date) => {
     const ActionsConfigsList: Record<ModelsWorkingCommands, IActionConfig> = {
         [ModelsWorkingCommands.CREATE]: {
             updateBoardFunction: () => { board.updateSettingsConfig(loadedBoardSettingsConfig) },
-            boardActionFunction: () => { board.createModels() },
+            boardActionFunction: () => { board.create() },
             clientSendActionFunctions: [],
             allClientsSendActionFunctions: [],
             infoMessage: ServerInfoMessageTexts.CREATE_MODELS,
@@ -75,7 +78,7 @@ export const WebSocketController = (board: Board, startDate: Date) => {
         [ModelsWorkingCommands.START]: {
             updateBoardFunction: null,
             boardActionFunction: () => {
-                board.startModels();
+                board.start();
                 startDate = new Date();
             },
             clientSendActionFunctions: [sendModelsActionsStates],
@@ -85,7 +88,7 @@ export const WebSocketController = (board: Board, startDate: Date) => {
         },
         [ModelsWorkingCommands.STOP]: {
             updateBoardFunction: null,
-            boardActionFunction: () => { board.stopModels() },
+            boardActionFunction: () => { board.stop() },
             clientSendActionFunctions: [sendModelsActionsStates],
             allClientsSendActionFunctions: [],
             infoMessage: ServerInfoMessageTexts.STOP_MODELS,
@@ -118,7 +121,7 @@ export const WebSocketController = (board: Board, startDate: Date) => {
 
         clientsList.push(client);
 
-        boardAction(() => { board.createModels() }, [], [], webSocketClient, ServerInfoMessageTexts.CREATE_MODELS);
+        boardAction(() => { board.create() }, [], [], webSocketClient, ServerInfoMessageTexts.CREATE_MODELS);
 
         sendMessageCurrentClient(ServerMessageTypes.MODELS_WORKING_COMMANDS, MODELS_COMMANDS_FOR_HOST, webSocketClient);
 
@@ -143,7 +146,7 @@ export const WebSocketController = (board: Board, startDate: Date) => {
 
     const hanldeClientLeave = (leavedClientID: string) => {
         if (clientsList[0].getID() === leavedClientID) {
-            board.stopModels();
+            board.stop();
 
             sendMessageAllClients(ServerMessageTypes.MESSAGE, ServerInfoMessageTexts.STOP_MODELS);
         }
