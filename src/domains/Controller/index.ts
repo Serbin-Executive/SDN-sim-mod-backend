@@ -50,7 +50,7 @@ class Controller {
 
         return {
             time: workTime,
-            CPU: ControllerParametersService.getCPU(servicedModel.getSourceElements()),
+            CPU: ControllerParametersService.getCPU(servicedModel.getSourceElements(), servicedModel.getDelayElements()),
             usedDiskSpace: ControllerParametersService.getUsedDiskSpace(servicedModel.getQueueElements()),
             memoryUsage: ControllerParametersService.getMemoryUsage(servicedModel.getQueueElements(), servicedModel.getDelayElements()),
             networkTraffic: ControllerParametersService.getNetworkTraffic(servicedModel.getSourceElements()),

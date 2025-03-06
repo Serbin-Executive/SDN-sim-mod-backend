@@ -16,8 +16,10 @@ export interface ISettingsConfig {
     workIntervalValue: number;
     statisticIntervalValue: number;
     modelSourceElementsCountValue: number;
-    queueCapacity: number;
-    delayCapacity: number;
+    minQueueCapacity: number;
+    maxQueueCapacity: number;
+    minDelayCapacity: number;
+    maxDelayCapacity: number;
     delayValue: number;
     isPartialInitialBoot: boolean;
     isQualityOfServiceActive: boolean;

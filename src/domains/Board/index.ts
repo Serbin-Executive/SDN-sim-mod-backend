@@ -6,7 +6,7 @@ import DelayElement from "../DelayElement";
 import SinkElement from "../SinkElement";
 import Controller from "../Controller";
 import Balancer from "../Balancer";
-import { addElementsInList, DEFAULT_DELAY_CAPACITY, DEFAULT_DELAY_VALUE, DEFAULT_IS_PARTIAL_INITIAL_BOOT, DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE, DEFAULT_JITTER_DANGER_VALUE, DEFAULT_LOAD_FACTOR_DANGER_VALUE, DEFAULT_MAX_SPAWN_AGENTS_VALUE, DEFAULT_MIN_SPAWN_AGENTS_VALUE, DEFAULT_MODEL_SOURCE_ELEMENTS_COUNT_VALUE, DEFAULT_MODELS_COUNT_VALUE, DEFAULT_PING_DANGER_VALUE, DEFAULT_QUEUE_CAPACITY, DEFAULT_STATISTIC_INTERVAL_VALUE, DEFAULT_WORK_INTERVAL_VALUE, getPreviousElementsList, settingNextElementsInSequence } from "../../utils/constants";
+import { addElementsInList, DEFAULT_DELAY_VALUE, DEFAULT_IS_PARTIAL_INITIAL_BOOT, DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE, DEFAULT_JITTER_DANGER_VALUE, DEFAULT_LOAD_FACTOR_DANGER_VALUE, DEFAULT_MAX_DELAY_CAPACITY, DEFAULT_MAX_QUEUE_CAPACITY, DEFAULT_MAX_SPAWN_AGENTS_VALUE, DEFAULT_MIN_DELAY_CAPACITY, DEFAULT_MIN_QUEUE_CAPACITY, DEFAULT_MIN_SPAWN_AGENTS_VALUE, DEFAULT_MODEL_SOURCE_ELEMENTS_COUNT_VALUE, DEFAULT_MODELS_COUNT_VALUE, DEFAULT_PING_DANGER_VALUE, DEFAULT_STATISTIC_INTERVAL_VALUE, DEFAULT_WORK_INTERVAL_VALUE, getPreviousElementsList, getRandomArbitrary, settingNextElementsInSequence } from "../../utils/constants";
 import { ISettingsConfig, TBoardBalancer, TControllersList, TModelsInterval } from "./meta";
 import { TControllersStatesList } from "./meta";
 import { TModelsList, TBoardTime } from "../meta";
@@ -46,8 +46,10 @@ class Board {
             workIntervalValue: DEFAULT_WORK_INTERVAL_VALUE,
             statisticIntervalValue: DEFAULT_STATISTIC_INTERVAL_VALUE,
             modelSourceElementsCountValue: DEFAULT_MODEL_SOURCE_ELEMENTS_COUNT_VALUE,
-            queueCapacity: DEFAULT_QUEUE_CAPACITY,
-            delayCapacity: DEFAULT_DELAY_CAPACITY,
+            minQueueCapacity: DEFAULT_MIN_QUEUE_CAPACITY,
+            maxQueueCapacity: DEFAULT_MAX_QUEUE_CAPACITY,
+            minDelayCapacity: DEFAULT_MIN_DELAY_CAPACITY,
+            maxDelayCapacity: DEFAULT_MAX_DELAY_CAPACITY,
             delayValue: DEFAULT_DELAY_VALUE,
             isPartialInitialBoot: DEFAULT_IS_PARTIAL_INITIAL_BOOT,
             isQualityOfServiceActive: DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE,
@@ -178,8 +180,10 @@ class Board {
         this.settingsConfig.workIntervalValue = newSettingsConfig.workIntervalValue;
         this.settingsConfig.statisticIntervalValue = newSettingsConfig.statisticIntervalValue;
         this.settingsConfig.modelSourceElementsCountValue = newSettingsConfig.modelSourceElementsCountValue;
-        this.settingsConfig.queueCapacity = newSettingsConfig.queueCapacity;
-        this.settingsConfig.delayCapacity = newSettingsConfig.delayCapacity;
+        this.settingsConfig.minQueueCapacity = newSettingsConfig.minQueueCapacity;
+        this.settingsConfig.maxQueueCapacity = newSettingsConfig.maxQueueCapacity;
+        this.settingsConfig.minDelayCapacity = newSettingsConfig.minDelayCapacity;
+        this.settingsConfig.maxDelayCapacity = newSettingsConfig.maxDelayCapacity;
         this.settingsConfig.delayValue = newSettingsConfig.delayValue;
         this.settingsConfig.isPartialInitialBoot = newSettingsConfig.isPartialInitialBoot;
         this.settingsConfig.isQualityOfServiceActive = newSettingsConfig.isQualityOfServiceActive;
@@ -243,7 +247,9 @@ class Board {
 
         this.balancer = new Balancer();
 
-        for (let index = 0; index < this.settingsConfig.modelsCountValue; index++) {
+        const {modelsCountValue, minQueueCapacity, maxQueueCapacity, minDelayCapacity, maxDelayCapacity} = this.settingsConfig
+
+        for (let index = 0; index < modelsCountValue; index++) {
             const newModel = new Model();
 
             const sourceElements: SourceElement[] = [];
@@ -270,8 +276,8 @@ class Board {
 
             settingNextElementsInSequence(networkElements);
 
-            queueElement.setCapacity(this.settingsConfig.queueCapacity);
-            delayElement.setCapacity(this.settingsConfig.delayCapacity);
+            queueElement.setCapacity(getRandomArbitrary(minQueueCapacity, maxQueueCapacity));
+            delayElement.setCapacity(getRandomArbitrary(minDelayCapacity, maxDelayCapacity));
 
             queueElement.sendListenerInit();
             queueElement.setLostSinkElement(lostSinkElement);

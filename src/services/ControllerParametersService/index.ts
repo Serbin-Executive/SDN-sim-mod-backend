@@ -3,7 +3,7 @@ import QueueElement from "../../domains/QueueElement";
 import SourceElement from "../../domains/SourceElement";
 import SinkElement from "../../domains/SinkElement";
 import { TLostSinkElement } from "../../domains/QueueElement/meta";
-import { DEFAULT_USED_DISK_SPACE, DEFAULT_DELAY_CAPACITY, DEFAULT_DELAY_VALUE, getRandomArbitrary, DEFAULT_WORK_INTERVAL_VALUE } from "../../utils/constants";
+import { DEFAULT_USED_DISK_SPACE, getRandomArbitrary, DEFAULT_WORK_INTERVAL_VALUE, DEFAULT_DELAY_VALUE } from "../../utils/constants";
 import { MILLISECONDS_MULTIPLIER } from "./meta";
 import { TControllerParameter } from "../../domains/Controller/meta";
 
@@ -65,10 +65,12 @@ class ControllerParametersService {
         return lastAgentLeftTime - previousAgentLeftTime;
     }
 
-    public static getCPU(sourceElements: SourceElement[]): TControllerParameter {
+    public static getCPU(sourceElements: SourceElement[], delayElements: DelayElement[]): TControllerParameter {
+        const delaysCapacity: number = delayElements.reduce((delaysCapacity, delayElement) => delaysCapacity + delayElement.getCapacity(), 0)
+
         const receiptIntensity: TControllerParameter = this.getNetworkTraffic(sourceElements) / (DEFAULT_WORK_INTERVAL_VALUE / DEFAULT_DELAY_VALUE);
         
-        const loadFactor: TControllerParameter = receiptIntensity * (DEFAULT_DELAY_VALUE / MILLISECONDS_MULTIPLIER) / DEFAULT_DELAY_CAPACITY;
+        const loadFactor: TControllerParameter = receiptIntensity * (DEFAULT_DELAY_VALUE / MILLISECONDS_MULTIPLIER) / delaysCapacity;
 
         return loadFactor <= 1 ? loadFactor : 1;
     }
