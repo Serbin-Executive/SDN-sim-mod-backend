@@ -3,6 +3,8 @@ import { randomUUID } from "crypto";
 import { TBoardTime } from "../meta";
 import { TBalancerID } from "./meta";
 import { TControllersList } from "../Board/meta";
+import { getMaxElementIndex, getMinElementIndex } from "../../utils/constants";
+import { ServerMessageTypes } from "../../controllers/WebSocketController/meta";
 
 class Balancer {
     private ID: TBalancerID;
@@ -40,7 +42,7 @@ class Balancer {
         console.log();
     }
 
-    public checkModelsLoadFactors(workTime: TBoardTime, delayValueToIntervalValueMultiplier: number, loadFactorDangerValue: number, maxSpawnAgentsValue: number, pingDangerValue: number, jitterDangerValue: number): void {
+    public checkModelsLoadFactors(workTime: TBoardTime, sendFunction: any, delayValueToIntervalValueMultiplier: number, loadFactorDangerValue: number, maxSpawnAgentsValue: number, pingDangerValue: number, jitterDangerValue: number): void {
         let isNeedModelsLoadsAnalysis: boolean = false;
 
         for (let index = 0; index < this.controllersList.length; index++) {
@@ -72,6 +74,20 @@ class Balancer {
         this.controllersList.forEach((controller) => {
             parametersLoadAmountsList.push(controller.getParametersAmount(workTime, maxSpawnAgentsValue, pingDangerValue, jitterDangerValue));
         });
+
+        const mostLoadedControllerIndex = getMaxElementIndex(parametersLoadAmountsList);
+        const leastLoadedControllerIndex = getMinElementIndex(parametersLoadAmountsList);
+
+
+        const mostLoadedController = this.controllersList[mostLoadedControllerIndex]!;
+        const leastLoadedController = this.controllersList[leastLoadedControllerIndex]!;
+        const recipientModel = leastLoadedController.getServicedModel();
+
+        if (!recipientModel) {
+            throw new Error("Cannot defined recipient model for move source element, serviced model is udefined");
+        }
+
+        mostLoadedController.movedServicedModelSinkElement(recipientModel, sendFunction, mostLoadedControllerIndex, leastLoadedControllerIndex);
 
         this.printParametersLoadAmountsList(parametersLoadAmountsList);
     }

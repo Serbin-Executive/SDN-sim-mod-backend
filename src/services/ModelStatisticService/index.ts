@@ -61,11 +61,19 @@ class ModelStatisticService {
     }
 
     public static getAgentsInModelCount(modelCurrentState: IModelStateInfo): number {
-        const agentsCameInModelCount = this.getAgentsCameInModelCount(modelCurrentState);
-        const agentsLeftThroughModelCount = this.getAgentsLeftThroughModelCount(modelCurrentState);
-        const agentsLostInModelCount = this.getAgentsLostInModelCount(modelCurrentState);
+        // const agentsCameInModelCount = this.getAgentsCameInModelCount(modelCurrentState);
+        // const agentsLeftThroughModelCount = this.getAgentsLeftThroughModelCount(modelCurrentState);
+        // const agentsLostInModelCount = this.getAgentsLostInModelCount(modelCurrentState);
 
-        return agentsCameInModelCount - agentsLeftThroughModelCount - agentsLostInModelCount;
+        // return agentsCameInModelCount - agentsLeftThroughModelCount - agentsLostInModelCount;
+
+        const queueElements = this.getNetworkElementsListByName(modelCurrentState.networkElementsStatesList, NetworkElementsTypes.QUEUE);
+        const delayElements = this.getNetworkElementsListByName(modelCurrentState.networkElementsStatesList, NetworkElementsTypes.DELAY);
+
+        const agentsInQueueElementsCount = queueElements.reduce((count, queueElement) => count + this.getStatisticFieldValueByFieldName(queueElement.statisticFields, StatisticFieldsNames.AGENTS_COUNT), 0);
+        const agentsInDelayElementsCount = delayElements.reduce((count, delayElement) => count + this.getStatisticFieldValueByFieldName(delayElement.statisticFields, StatisticFieldsNames.AGENTS_COUNT), 0);
+
+        return agentsInQueueElementsCount + agentsInDelayElementsCount;
     }
 
     public static getReceiptIntensity(modelLastState: IModelStateInfo): number {

@@ -3,17 +3,17 @@ import { TPreviousNetworkElements } from "../../domains/meta";
 
 export const DEFAULT_MODELS_COUNT_VALUE: number = 10;
 
-export const DEFAULT_MIN_SPAWN_AGENTS_VALUE: number = 5;
-export const DEFAULT_MAX_SPAWN_AGENTS_VALUE: number = 10;
+export const DEFAULT_MIN_SPAWN_AGENTS_VALUE: number = 10;
+export const DEFAULT_MAX_SPAWN_AGENTS_VALUE: number = 20;
 export const DEFAULT_WORK_INTERVAL_VALUE: number = 2000;
-export const DEFAULT_STATISTIC_INTERVAL_VALUE: number = 1000;
+export const DEFAULT_STATISTIC_INTERVAL_VALUE: number = 2000;
 export const DEFAULT_MODEL_SOURCE_ELEMENTS_COUNT_VALUE: number = 1;
 // export const DEFAULT_QUEUE_CAPACITY: number = 10;
 // export const DEFAULT_DELAY_CAPACITY: number = 5;
-export const DEFAULT_MIN_QUEUE_CAPACITY: number = 2;
+export const DEFAULT_MIN_QUEUE_CAPACITY: number = 5;
 export const DEFAULT_MAX_QUEUE_CAPACITY: number = 10;
 export const DEFAULT_MIN_DELAY_CAPACITY: number = 2;
-export const DEFAULT_MAX_DELAY_CAPACITY: number = 10;
+export const DEFAULT_MAX_DELAY_CAPACITY: number = 40;
 
 export const DEFAULT_DELAY_VALUE: number = 1000;
 export const DEFAULT_IS_PARTIAL_INITIAL_BOOT: boolean = false;
@@ -31,7 +31,7 @@ export const DEFAULT_USED_DISK_SPACE: number = 0.4;
 export const WEB_CLIENT_PORT: number = 3001;
 
 export const getRandomArbitrary = (min: number, max: number) => {
-    return Math.random() * (max - min) + min;
+    return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 export const addElementsInList = (list: NetworkElement[], ...elements: NetworkElement[]): void => {
@@ -66,4 +66,32 @@ export const combineArray = (firstArray:any[], secondArray: any[]): void => {
     secondArray.forEach((element) => {
         firstArray.push(element);
     });
+}
+
+export const getMaxElementIndex = (list: number[]): number => {
+    let maxValue: number = list[0];
+    let maxElementIndex: number = 0;
+
+    for (let index = 1; index < list.length; index++) {
+        if (list[index] > maxValue) {
+            maxElementIndex = index;
+            maxValue = list[index];
+        }
+    }
+
+    return maxElementIndex;
+}
+
+export const getMinElementIndex = (list: number[]): number => {
+    let minValue: number = list[0];
+    let minElementIndex: number = 0;
+
+    for (let index = 1; index < list.length; index++) {
+        if (list[index] < minValue) {
+            minElementIndex = index;
+            minValue = list[index];
+        }
+    }
+
+    return minElementIndex;
 }

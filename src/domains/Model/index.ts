@@ -176,6 +176,20 @@ class Model {
         this.clearAgents();
     }
 
+    public addSourceElement(sourceElement: SourceElement): void {
+        this.networkElements.unshift(sourceElement);
+        
+        this.sourceElements.push(sourceElement);
+    }
+
+    public deleteSourceElement(deletedSourceElement: SourceElement): void {
+        const updatedNetworkElements = this.networkElements.filter((element) => element.getId() !== deletedSourceElement.getId());
+
+        this.setNetworkElements(updatedNetworkElements);
+        
+        this.sourceElements.shift();
+    }
+
     public clearStatistic(): void {
         this.statistic = {
             allAgentsCount: 0,

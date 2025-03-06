@@ -10,7 +10,7 @@ import { addElementsInList, DEFAULT_DELAY_VALUE, DEFAULT_IS_PARTIAL_INITIAL_BOOT
 import { ISettingsConfig, TBoardBalancer, TControllersList, TModelsInterval } from "./meta";
 import { TControllersStatesList } from "./meta";
 import { TModelsList, TBoardTime } from "../meta";
-import { IModelStateInfo, ISendedModelsInfoList, TModelID, TModelsLastStateInfo } from "../Model/meta";
+import { IModelStateInfo, ISendedModelsInfoList, TModelID } from "../Model/meta";
 import { ServerMessageTypes } from "../../controllers/WebSocketController/meta";
 import ModelStatisticService from "../../services/ModelStatisticService";
 
@@ -249,7 +249,7 @@ class Board {
 
         const delayValueToIntervalValueMultiplier = workIntervalValue / delayValue;
 
-        this.balancer.checkModelsLoadFactors(this.statisticTime, delayValueToIntervalValueMultiplier, loadFactorDangerValue, maxSpawnAgentsValue, pingDangerValue, jitterDangerValue);
+        this.balancer.checkModelsLoadFactors(this.statisticTime, this.sendFunction, delayValueToIntervalValueMultiplier, loadFactorDangerValue, maxSpawnAgentsValue, pingDangerValue, jitterDangerValue);
     }
 
     public modelsIntervalAction(): void {
@@ -311,6 +311,8 @@ class Board {
 
             queueElement.setCapacity(getRandomArbitrary(minQueueCapacity, maxQueueCapacity));
             delayElement.setCapacity(getRandomArbitrary(minDelayCapacity, maxDelayCapacity));
+
+            this.sendFunction(ServerMessageTypes.MESSAGE, `Model ${index + 1} characteristic: queueCapacity = ${queueElement.getCapacity()}, delayCapacity = ${delayElement.getCapacity()}`);
 
             queueElement.sendListenerInit();
             queueElement.setLostSinkElement(lostSinkElement);
@@ -384,7 +386,7 @@ class Board {
         this.controllersList.forEach((controller) => {
             this.sendingData.push(controller.getParametersStatesList());
 
-            controller.printParametersLists();
+            // controller.printParametersLists();
         });
     }
 }

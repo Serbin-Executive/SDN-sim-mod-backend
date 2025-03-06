@@ -1,8 +1,10 @@
 import ControllerParametersService from "../../services/ControllerParametersService";
+import Model from "../Model";
 import { randomUUID } from "crypto";
 import { CONTROLLER_CHECK_INTERVAL_TIME, TControllerID, TServicedModel, TControllerParameter, TParametersStatesList, IParametersState, MAX_PARAMETER_LOAD_VALUE, DEFAULT_PARAMETERS_DANGER_VALUE } from "./meta";
 import { TBoardTime } from "../meta";
 import { TModelsInterval } from "../Board/meta";
+import { ServerMessageTypes } from "../../controllers/WebSocketController/meta";
 
 class Controller {
     private ID: TControllerID;
@@ -60,6 +62,22 @@ class Controller {
         }
     }
 
+    public getParametersAmount(workTime: TBoardTime, maxSpawnAgentsValue: number, pingDangerValue: number, jitterDangerValue: number): number {
+        let parametersAmount: number = 0;
+
+        const {usedDiskSpace, memoryUsage, networkTraffic, packetLost, ping, jitter, CPU} = this.getParametersState(workTime);
+
+        parametersAmount += MAX_PARAMETER_LOAD_VALUE * ( usedDiskSpace / DEFAULT_PARAMETERS_DANGER_VALUE );
+        parametersAmount += MAX_PARAMETER_LOAD_VALUE * ( memoryUsage / DEFAULT_PARAMETERS_DANGER_VALUE );
+        parametersAmount += MAX_PARAMETER_LOAD_VALUE * ( networkTraffic / maxSpawnAgentsValue );
+        parametersAmount += MAX_PARAMETER_LOAD_VALUE * ( packetLost / DEFAULT_PARAMETERS_DANGER_VALUE );
+        parametersAmount += MAX_PARAMETER_LOAD_VALUE * ( ping / pingDangerValue );
+        parametersAmount += MAX_PARAMETER_LOAD_VALUE * ( jitter / jitterDangerValue );
+        parametersAmount += MAX_PARAMETER_LOAD_VALUE * ( CPU / DEFAULT_PARAMETERS_DANGER_VALUE );
+
+        return parametersAmount;
+    }
+
     public setServicedModel(servicedModel: TServicedModel): void {
         this.servicedModel = servicedModel;
     }
@@ -95,7 +113,7 @@ class Controller {
 
         this.parametersStatesList.push(newParametersState);
 
-        this.printParameters(newParametersState);
+        // this.printParameters(newParametersState);
     }
 
     public start(): void {
@@ -110,20 +128,53 @@ class Controller {
         clearInterval(this.checkTimer);
     }
 
-    public getParametersAmount(workTime: TBoardTime, maxSpawnAgentsValue: number, pingDangerValue: number, jitterDangerValue: number): number {
-        let parametersAmount: number = 0;
+    public movedServicedModelSinkElement(recipientModel: Model, sendFunction: any, sendingModelIndex: number, recipientModelIndex: number): void {
+        if (!this.servicedModel) {
+            throw new Error("Controller cannot moved source element, serviced model is udefined");
+        }
 
-        const {usedDiskSpace, memoryUsage, networkTraffic, packetLost, ping, jitter, CPU} = this.getParametersState(workTime);
+        const movedSourceElement = this.servicedModel.getSourceElements()[0];
 
-        parametersAmount += MAX_PARAMETER_LOAD_VALUE * ( usedDiskSpace / DEFAULT_PARAMETERS_DANGER_VALUE );
-        parametersAmount += MAX_PARAMETER_LOAD_VALUE * ( memoryUsage / DEFAULT_PARAMETERS_DANGER_VALUE );
-        parametersAmount += MAX_PARAMETER_LOAD_VALUE * ( networkTraffic / maxSpawnAgentsValue );
-        parametersAmount += MAX_PARAMETER_LOAD_VALUE * ( packetLost / DEFAULT_PARAMETERS_DANGER_VALUE );
-        parametersAmount += MAX_PARAMETER_LOAD_VALUE * ( ping / pingDangerValue );
-        parametersAmount += MAX_PARAMETER_LOAD_VALUE * ( jitter / jitterDangerValue );
-        parametersAmount += MAX_PARAMETER_LOAD_VALUE * ( CPU / DEFAULT_PARAMETERS_DANGER_VALUE );
+        // console.log("\n\n\n\n\n\n\n\n\n\n", "MOVED SOURCE: ", movedSourceElement);
 
-        return parametersAmount;
+        if (!movedSourceElement) {
+            return;
+        }
+
+        const releasedQueueElement = this.servicedModel.getQueueElements()[0];
+        const recipientQueueElement = recipientModel.getQueueElements()[0];
+
+        // console.log("RELEASED QUEUE ELEMENT: ", releasedQueueElement);
+        // console.log("RECIPIENT QUEUE ELEMENT: ", recipientQueueElement);
+
+        const releasedQueuePreviousElements = releasedQueueElement.getPreviousElements();
+        const recipientQueuePreviousElements = recipientQueueElement.getPreviousElements();
+        
+
+        if (!releasedQueuePreviousElements || !recipientQueuePreviousElements) {
+            throw new Error("Cannot moved source element, released or recipient queue element previous elements is undefined");
+        }
+
+        // console.log("RELEASED QUEUE PREVIOUS ELEMENT: ", releasedQueuePreviousElements);
+        // console.log("RECIPIENT QUEUE PREVIOUS ELEMENT: ", recipientQueuePreviousElements);
+
+        releasedQueuePreviousElements.delete(movedSourceElement.getId());
+        this.servicedModel.deleteSourceElement(movedSourceElement);
+
+        // console.log("STATE AFTER DELETE: ");
+        // console.log("RELEASED QUEUE PREVIOUS ELEMENTS: ", releasedQueuePreviousElements);
+        // console.log("SENDED MODEL SOURCE ELEMENTS: ", this.servicedModel.getSourceElements());
+
+        recipientModel.addSourceElement(movedSourceElement);
+        movedSourceElement.setNextElement(recipientQueueElement);
+        recipientQueuePreviousElements.set(movedSourceElement.getId(), movedSourceElement);
+
+        // console.log("STATE AFTER MOVED: ");
+        // console.log("RECIPIENT MODEL SOURCE ELEMENTS: ", recipientModel.getSourceElements());
+        // console.log("MOVED SOURCE AFTER CHANGED: ", movedSourceElement);
+        // console.log("RECIPIENT QUEUE PREVIOUS ELEMENTS: ", recipientQueuePreviousElements);
+
+        sendFunction(ServerMessageTypes.MESSAGE, `Source element moved from Model ${sendingModelIndex + 1} to Model ${recipientModelIndex + 1}`);
     }
 
     public printParametersLists(): void {
