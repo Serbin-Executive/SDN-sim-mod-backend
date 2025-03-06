@@ -10,8 +10,9 @@ import { addElementsInList, DEFAULT_DELAY_VALUE, DEFAULT_IS_PARTIAL_INITIAL_BOOT
 import { ISettingsConfig, TBoardBalancer, TControllersList, TModelsInterval } from "./meta";
 import { TControllersStatesList } from "./meta";
 import { TModelsList, TBoardTime } from "../meta";
-import { IModelStateInfo, TModelID, TModelsLastStateInfo } from "../Model/meta";
+import { IModelStateInfo, ISendedModelsInfoList, TModelID, TModelsLastStateInfo } from "../Model/meta";
 import { ServerMessageTypes } from "../../controllers/WebSocketController/meta";
+import ModelStatisticService from "../../services/ModelStatisticService";
 
 class Board {
     private modelsList: TModelsList;
@@ -113,16 +114,48 @@ class Board {
         return this.sendFunction;
     }
 
-    public getNeedSendModelsStatesInfo(modelsList: TModelsList): TModelsLastStateInfo {
-        const needSendModelsStatesInfo: TModelsLastStateInfo = [];
+    public getSendedModelsInfoList(modelsList: TModelsList): ISendedModelsInfoList {
+        const sendedModelsInfoList: ISendedModelsInfoList = {
+            sendedChartsDataList: [],
+            sendedModelsAdditionalInfoList: [],
+        };
+
+        const { workIntervalValue, delayValue } = this.settingsConfig;
+
+        const delayValueToIntervalValueMultiplier = workIntervalValue / delayValue;
+
 
         modelsList.forEach((model) => {
-            const needSendModelStateInfo: IModelStateInfo = model.getModelStateInfo(this.statisticTime);
+            const lastModelStateInfo: IModelStateInfo = model.getModelStateInfo(this.statisticTime);
 
-            needSendModelsStatesInfo.push(needSendModelStateInfo);
+            const currentLoadFactor: number = ModelStatisticService.getLoadFactor(lastModelStateInfo, delayValueToIntervalValueMultiplier);
+            const currentQueueLoad: number = ModelStatisticService.getQueueLoad(lastModelStateInfo);
+
+            const agentsCameInModelCount =
+                ModelStatisticService.getAgentsCameInModelCount(lastModelStateInfo);
+            const agentsLeftThroughModelCount =
+                ModelStatisticService.getAgentsLeftThroughModelCount(lastModelStateInfo);
+            const agentsInModelCount =
+                ModelStatisticService.getAgentsInModelCount(lastModelStateInfo);
+            const agentsLostCount =
+                ModelStatisticService.getAgentsLostInModelCount(lastModelStateInfo);
+
+            sendedModelsInfoList.sendedChartsDataList.push({
+                time: String(this.statisticTime),
+                loadFactor: String(currentLoadFactor),
+                queueLoad: String(currentQueueLoad),
+            });
+            sendedModelsInfoList.sendedModelsAdditionalInfoList.push(
+                {
+                    agentsCameInModelCount: String(agentsCameInModelCount),
+                    agentsLeftThroughModelCount: String(agentsLeftThroughModelCount),
+                    agentsInModelCount: String(agentsInModelCount),
+                    agentsLostCount: String(agentsLostCount),
+                }
+            )
         })
 
-        return needSendModelsStatesInfo;
+        return sendedModelsInfoList;
     }
 
     public getSettingsConfig(): ISettingsConfig {
@@ -236,9 +269,9 @@ class Board {
 
         this.balancerCheck();
 
-        const needSendModelsStatesInfo = this.getNeedSendModelsStatesInfo(this.modelsList);
+        const sendedModelsInfoList: ISendedModelsInfoList = this.getSendedModelsInfoList(this.modelsList);
 
-        this.sendFunction(ServerMessageTypes.MODELS_STATES, needSendModelsStatesInfo);
+        this.sendFunction(ServerMessageTypes.MODELS_STATES, sendedModelsInfoList);
     }
 
     public create(): void {
@@ -247,7 +280,7 @@ class Board {
 
         this.balancer = new Balancer();
 
-        const {modelsCountValue, minQueueCapacity, maxQueueCapacity, minDelayCapacity, maxDelayCapacity} = this.settingsConfig
+        const { modelsCountValue, minQueueCapacity, maxQueueCapacity, minDelayCapacity, maxDelayCapacity } = this.settingsConfig
 
         for (let index = 0; index < modelsCountValue; index++) {
             const newModel = new Model();
@@ -341,6 +374,7 @@ class Board {
         })
 
         this.workTime = 0;
+        this.statisticTime = 0;
 
         this.isModelsStart = false;
         this.isModelsStop = true;

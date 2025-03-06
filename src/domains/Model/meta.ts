@@ -28,3 +28,25 @@ export type TModelStatesInfo = IModelStateInfo[];
 export interface IModelStatistic {
     allAgentsCount: number;
 }
+
+export interface ISendedChartsData {
+    time: string;
+    loadFactor: string;
+    queueLoad: string;
+}
+
+export type TSendedChartsDataList = ISendedChartsData[];
+
+export interface ISendedModelAdditionalInfo {
+    agentsCameInModelCount: string;
+    agentsLeftThroughModelCount: string;
+    agentsInModelCount: string;
+    agentsLostCount: string;
+}
+
+export type TSendedModelsAdditionalInfoList = ISendedModelAdditionalInfo[];
+
+export interface ISendedModelsInfoList {
+    sendedChartsDataList: TSendedChartsDataList;
+    sendedModelsAdditionalInfoList: TSendedModelsAdditionalInfoList;
+}

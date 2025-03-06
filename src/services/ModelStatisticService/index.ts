@@ -159,6 +159,21 @@ class ModelStatisticService {
         return serviceIntensityList;
     };
 
+    public static getQueueLoad(modelLastState: IModelStateInfo): number {
+        let queueLoad: number = 0;
+
+        const networkElements = modelLastState.networkElementsStatesList;
+        const queueElements = networkElements.filter((element) => element.type === NetworkElementsTypes.QUEUE);
+
+        queueElements.forEach((element) => {
+            const agentsCount = this.getStatisticFieldValueByFieldName(element.statisticFields, StatisticFieldsNames.AGENTS_COUNT);
+
+            queueLoad += agentsCount;
+        });
+
+        return queueLoad;
+    }
+
     public static getQueueLoadList(modelStatesList: TModelStatesInfo): number[] {
         const queueLoadList: number[] = [];
 
