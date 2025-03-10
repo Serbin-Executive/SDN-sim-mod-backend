@@ -4,7 +4,6 @@ import { TBoardTime } from "../meta";
 import { TBalancerID } from "./meta";
 import { TControllersList } from "../Board/meta";
 import { getMaxElementIndex, getMinElementIndex } from "../../utils/constants";
-import { ServerMessageTypes } from "../../controllers/WebSocketController/meta";
 
 class Balancer {
     private ID: TBalancerID;
@@ -42,28 +41,46 @@ class Balancer {
         console.log();
     }
 
-    public checkModelsLoadFactors(workTime: TBoardTime, sendFunction: any, delayValueToIntervalValueMultiplier: number, loadFactorDangerValue: number, maxSpawnAgentsValue: number, pingDangerValue: number, jitterDangerValue: number): void {
-        let isNeedModelsLoadsAnalysis: boolean = false;
+    private getNeedModelsLoadsAnalysis(isQualityOfServiceActive: boolean, workTime: TBoardTime, delayValueToIntervalValueMultiplier: number, loadFactorDangerValue: number, pingDangerValue: number, jitterDangerValue: number): boolean {
+        if (!isQualityOfServiceActive) {
+            for (let index = 0; index < this.controllersList.length; index++) {
+                const currentController = this.controllersList[index];
+    
+                const servicedModel = currentController.getServicedModel();
+    
+                if (!servicedModel) {
+                    throw new Error("Cannot check models load factors, some controller no has serviced model");
+                }
+    
+                const currentLoadFactor: number = servicedModel.getLoadFactor(workTime, delayValueToIntervalValueMultiplier);
+    
+                if (currentLoadFactor < loadFactorDangerValue) {
+                    continue;
+                }
+    
+                return true;
+            }
 
+            return false;
+        }
+        
         for (let index = 0; index < this.controllersList.length; index++) {
             const currentController = this.controllersList[index];
 
-            const servicedModel = currentController.getServicedModel();
+            const currentParametersState = currentController.getParametersState(workTime);
 
-            if (!servicedModel) {
-                throw new Error("Cannot check models load factors, some controller no has serviced model");
-            }
-
-            const currentLoadFactor: number = servicedModel.getLoadFactor(workTime, delayValueToIntervalValueMultiplier);
-
-            if (currentLoadFactor < loadFactorDangerValue) {
+            if (currentParametersState.ping < pingDangerValue && currentParametersState.jitter < jitterDangerValue) {
                 continue;
             }
 
-            isNeedModelsLoadsAnalysis = true;
-
-            break;
+            return true;
         }
+
+        return false;
+    }
+
+    public checkModelsLoadFactors(isQualityOfServiceActive: boolean, workTime: TBoardTime, sendFunction: any, delayValueToIntervalValueMultiplier: number, loadFactorDangerValue: number, maxSpawnAgentsValue: number, pingDangerValue: number, jitterDangerValue: number): void {
+        const isNeedModelsLoadsAnalysis: boolean = this.getNeedModelsLoadsAnalysis(isQualityOfServiceActive, workTime, delayValueToIntervalValueMultiplier, loadFactorDangerValue, pingDangerValue, jitterDangerValue);
 
         if (!isNeedModelsLoadsAnalysis) {
             return;
@@ -77,7 +94,6 @@ class Balancer {
 
         const mostLoadedControllerIndex = getMaxElementIndex(parametersLoadAmountsList);
         const leastLoadedControllerIndex = getMinElementIndex(parametersLoadAmountsList);
-
 
         const mostLoadedController = this.controllersList[mostLoadedControllerIndex]!;
         const leastLoadedController = this.controllersList[leastLoadedControllerIndex]!;

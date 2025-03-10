@@ -21,9 +21,9 @@ export interface ISettingsConfig {
     minDelayCapacity: number;
     maxDelayCapacity: number;
     delayValue: number;
-    isPartialInitialBoot: boolean;
-    isQualityOfServiceActive: boolean;
     loadFactorDangerValue: number;
     pingDangerValue: number;
     jitterDangerValue: number;
+    isPartialInitialBoot: boolean;
+    isQualityOfServiceActive: boolean;
 }

@@ -22,6 +22,7 @@ class Board {
     private statisticTime: TBoardTime;
     private modelsWorkTimer: TModelsInterval;
     private sendModelsStatisticTimer: TModelsInterval;
+    private isModelsCreate: boolean;
     private isModelsStart: boolean;
     private isModelsStop: boolean;
     private sendingData: TControllersStatesList;
@@ -36,8 +37,9 @@ class Board {
         this.statisticTime = 0;
         this.modelsWorkTimer = null;
         this.sendModelsStatisticTimer = null;
+        this.isModelsCreate = false
         this.isModelsStart = false;
-        this.isModelsStop = true;
+        this.isModelsStop = false;
         this.sendingData = [];
         this.sendFunction = null;
         this.settingsConfig = {
@@ -96,6 +98,10 @@ class Board {
 
     public getSendModelsStatisticTimer(): TModelsInterval {
         return this.sendModelsStatisticTimer;
+    }
+
+    public getisModelsCreate(): boolean {
+        return this.isModelsCreate;
     }
 
     public getIsModelStart(): boolean {
@@ -190,6 +196,10 @@ class Board {
         this.sendModelsStatisticTimer = sendModelsStatisticTimer;
     }
 
+    public setIsModelsCreate(isModelsCreate: boolean) {
+        this.isModelsCreate = isModelsCreate;
+    }
+
     public setIsModelsStart(isModelsStart: boolean) {
         this.isModelsStart = isModelsStart;
     }
@@ -218,6 +228,9 @@ class Board {
         this.settingsConfig.minDelayCapacity = newSettingsConfig.minDelayCapacity;
         this.settingsConfig.maxDelayCapacity = newSettingsConfig.maxDelayCapacity;
         this.settingsConfig.delayValue = newSettingsConfig.delayValue;
+        this.settingsConfig.loadFactorDangerValue = newSettingsConfig.loadFactorDangerValue;
+        this.settingsConfig.pingDangerValue = newSettingsConfig.pingDangerValue;
+        this.settingsConfig.jitterDangerValue = newSettingsConfig.jitterDangerValue;
         this.settingsConfig.isPartialInitialBoot = newSettingsConfig.isPartialInitialBoot;
         this.settingsConfig.isQualityOfServiceActive = newSettingsConfig.isQualityOfServiceActive;
     }
@@ -245,18 +258,18 @@ class Board {
             throw new Error("Cannot complete statistic interval action, balancer is undefined");
         }
 
-        const { delayValue, workIntervalValue, maxSpawnAgentsValue, loadFactorDangerValue, pingDangerValue, jitterDangerValue } = this.settingsConfig;
+        const { isQualityOfServiceActive, delayValue, workIntervalValue, maxSpawnAgentsValue, loadFactorDangerValue, pingDangerValue, jitterDangerValue } = this.settingsConfig;
 
         const delayValueToIntervalValueMultiplier = workIntervalValue / delayValue;
 
-        this.balancer.checkModelsLoadFactors(this.statisticTime, this.sendFunction, delayValueToIntervalValueMultiplier, loadFactorDangerValue, maxSpawnAgentsValue, pingDangerValue, jitterDangerValue);
+        this.balancer.checkModelsLoadFactors(isQualityOfServiceActive, this.statisticTime, this.sendFunction, delayValueToIntervalValueMultiplier, loadFactorDangerValue, maxSpawnAgentsValue, pingDangerValue, jitterDangerValue);
     }
 
     public modelsIntervalAction(): void {
         this.clearIntervalStatistic();
 
         this.modelsList.forEach((model) => {
-            model.spawnAgents();
+            model.spawnAgents(this.settingsConfig.minSpawnAgentsValue, this.settingsConfig.maxSpawnAgentsValue);
         })
 
         this.workTime += this.settingsConfig.workIntervalValue;
@@ -290,24 +303,37 @@ class Board {
             const queueElements: QueueElement[] = [];
             const delayElements: DelayElement[] = [];
 
-            const sourceElement = new SourceElement();
+            // const sourceElement = new SourceElement();
             const queueElement = new QueueElement();
             const delayElement = new DelayElement();
             const sinkElement = new SinkElement();
             const lostSinkElement = new SinkElement();
 
-            addElementsInList(sourceElements, sourceElement);
-            addElementsInList(networkElements, sourceElement, queueElement, delayElement, sinkElement);
+            for (let index = 0; index < this.settingsConfig.modelSourceElementsCountValue; index++) {
+                const sourceElement = new SourceElement();
+                
+                sourceElement.setPreviousElements(getPreviousElementsList());
+                sourceElement.setNextElement(queueElement);
+
+                queueElement.setPreviousElements(getPreviousElementsList(sourceElement));
+
+                addElementsInList(sourceElements, sourceElement);
+                addElementsInList(networkElements, sourceElement);
+            }
+
+            // addElementsInList(sourceElements, sourceElement);
+            addElementsInList(networkElements, queueElement, delayElement, sinkElement);
             addElementsInList(queueElements, queueElement);
             addElementsInList(delayElements, delayElement);
 
-            sourceElement.setPreviousElements(getPreviousElementsList());
-            queueElement.setPreviousElements(getPreviousElementsList(sourceElement));
             delayElement.setPreviousElements(getPreviousElementsList(queueElement));
             sinkElement.setPreviousElements(getPreviousElementsList(delayElement));
             lostSinkElement.setPreviousElements(getPreviousElementsList(queueElement));
 
-            settingNextElementsInSequence(networkElements);
+            // settingNextElementsInSequence(networkElements);
+
+            queueElement.setNextElement(delayElement);
+            delayElement.setNextElement(sinkElement);
 
             queueElement.setCapacity(getRandomArbitrary(minQueueCapacity, maxQueueCapacity));
             delayElement.setCapacity(getRandomArbitrary(minDelayCapacity, maxDelayCapacity));
@@ -349,6 +375,7 @@ class Board {
 
         this.controllersList.forEach((controller) => controller.start());
 
+        this.isModelsCreate = true;
         this.isModelsStop = false;
         this.isModelsStart = true;
 
@@ -378,6 +405,7 @@ class Board {
         this.workTime = 0;
         this.statisticTime = 0;
 
+        this.isModelsCreate = false;
         this.isModelsStart = false;
         this.isModelsStop = true;
 
@@ -385,8 +413,6 @@ class Board {
 
         this.controllersList.forEach((controller) => {
             this.sendingData.push(controller.getParametersStatesList());
-
-            // controller.printParametersLists();
         });
     }
 }

@@ -135,8 +135,6 @@ class Controller {
 
         const movedSourceElement = this.servicedModel.getSourceElements()[0];
 
-        // console.log("\n\n\n\n\n\n\n\n\n\n", "MOVED SOURCE: ", movedSourceElement);
-
         if (!movedSourceElement) {
             return;
         }
@@ -144,35 +142,19 @@ class Controller {
         const releasedQueueElement = this.servicedModel.getQueueElements()[0];
         const recipientQueueElement = recipientModel.getQueueElements()[0];
 
-        // console.log("RELEASED QUEUE ELEMENT: ", releasedQueueElement);
-        // console.log("RECIPIENT QUEUE ELEMENT: ", recipientQueueElement);
-
         const releasedQueuePreviousElements = releasedQueueElement.getPreviousElements();
         const recipientQueuePreviousElements = recipientQueueElement.getPreviousElements();
         
-
         if (!releasedQueuePreviousElements || !recipientQueuePreviousElements) {
             throw new Error("Cannot moved source element, released or recipient queue element previous elements is undefined");
         }
 
-        // console.log("RELEASED QUEUE PREVIOUS ELEMENT: ", releasedQueuePreviousElements);
-        // console.log("RECIPIENT QUEUE PREVIOUS ELEMENT: ", recipientQueuePreviousElements);
-
         releasedQueuePreviousElements.delete(movedSourceElement.getId());
         this.servicedModel.deleteSourceElement(movedSourceElement);
-
-        // console.log("STATE AFTER DELETE: ");
-        // console.log("RELEASED QUEUE PREVIOUS ELEMENTS: ", releasedQueuePreviousElements);
-        // console.log("SENDED MODEL SOURCE ELEMENTS: ", this.servicedModel.getSourceElements());
 
         recipientModel.addSourceElement(movedSourceElement);
         movedSourceElement.setNextElement(recipientQueueElement);
         recipientQueuePreviousElements.set(movedSourceElement.getId(), movedSourceElement);
-
-        // console.log("STATE AFTER MOVED: ");
-        // console.log("RECIPIENT MODEL SOURCE ELEMENTS: ", recipientModel.getSourceElements());
-        // console.log("MOVED SOURCE AFTER CHANGED: ", movedSourceElement);
-        // console.log("RECIPIENT QUEUE PREVIOUS ELEMENTS: ", recipientQueuePreviousElements);
 
         sendFunction(ServerMessageTypes.MESSAGE, `Source element moved from Model ${sendingModelIndex + 1} to Model ${recipientModelIndex + 1}`);
     }

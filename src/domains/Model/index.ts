@@ -8,7 +8,7 @@ import { startDate } from "../..";
 import { randomUUID } from "crypto";
 import { ICurrentState, TBoardTime } from "../meta";
 import { IModelStateInfo, IModelStatistic, INetworElementState, IStateInfoField, TModelID, TStateInfo } from "./meta";
-import { getRandomArbitrary, DEFAULT_MIN_SPAWN_AGENTS_VALUE, DEFAULT_MAX_SPAWN_AGENTS_VALUE } from "../../utils/constants";
+import { getRandomArbitrary } from "../../utils/constants";
 import ModelStatisticService from "../../services/ModelStatisticService";
 
 class Model {
@@ -60,24 +60,9 @@ class Model {
         return this.statistic;
     }
 
-    // private getStateInfo = (state: ICurrentState): TStateInfo => {
-    //     const statesListInfo: TStateInfo = Object.entries(state).map(([fieldName, fieldValue]) => {
-
-    //         const stateField: IStateInfoField = {
-    //             fieldName: fieldName,
-    //             fieldValue: String(fieldValue),
-    //         };
-
-    //         return stateField;
-    //     })
-
-    //     return statesListInfo;
-    // }
-
-    public spawnAgents(): void {
+    public spawnAgents(minSpawnAgentsValue: number, maxSpawnAgentsValue: number ): void {
         const sourceElements = this.sourceElements;
-        // for (let agentIndex = 0; agentIndex < SPAWN_AGENTS_VALUE; agentIndex++) {
-        for (let agentIndex = 0; agentIndex < getRandomArbitrary(DEFAULT_MIN_SPAWN_AGENTS_VALUE, DEFAULT_MAX_SPAWN_AGENTS_VALUE); agentIndex++) {
+        for (let agentIndex = 0; agentIndex < getRandomArbitrary(minSpawnAgentsValue, maxSpawnAgentsValue); agentIndex++) {
             sourceElements.forEach((element) => {
                 const agent = new Agent();
 

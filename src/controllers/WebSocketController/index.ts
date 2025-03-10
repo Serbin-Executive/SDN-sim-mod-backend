@@ -2,7 +2,7 @@ import WebSocket from "ws";
 import Board from "../../domains/Board";
 import { Client } from "../../domains/Client";
 import { randomUUID } from "crypto";
-import { IActionConfig, IServerMessage, ModelsCommandsForHost, ModelsWorkingCommands, ServerInfoMessageTexts, ServerMessageTypes } from "./meta";
+import { boardWorkCommandsConfig, ClientCommandsTypes, COMMAND_INFO_WITHOUS_SETTINGS_CONFIG, IActionConfig, IClientMessage, IServerMessage, ServerInfoMessageTexts, ServerMessageTypes } from "./meta";
 import { DEFAULT_DELAY_VALUE, DEFAULT_IS_PARTIAL_INITIAL_BOOT, DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE, DEFAULT_JITTER_DANGER_VALUE, DEFAULT_LOAD_FACTOR_DANGER_VALUE, DEFAULT_MAX_DELAY_CAPACITY, DEFAULT_MAX_QUEUE_CAPACITY, DEFAULT_MAX_SPAWN_AGENTS_VALUE, DEFAULT_MIN_DELAY_CAPACITY, DEFAULT_MIN_QUEUE_CAPACITY, DEFAULT_MIN_SPAWN_AGENTS_VALUE, DEFAULT_MODEL_SOURCE_ELEMENTS_COUNT_VALUE, DEFAULT_MODELS_COUNT_VALUE, DEFAULT_PING_DANGER_VALUE, DEFAULT_STATISTIC_INTERVAL_VALUE, DEFAULT_WORK_INTERVAL_VALUE, WEB_CLIENT_PORT } from "../../utils/constants";
 import { ISettingsConfig } from "../../domains/Board/meta";
 
@@ -18,18 +18,32 @@ let loadedBoardSettingsConfig: ISettingsConfig = {
     minDelayCapacity: DEFAULT_MIN_DELAY_CAPACITY,
     maxDelayCapacity: DEFAULT_MAX_DELAY_CAPACITY,
     delayValue: DEFAULT_DELAY_VALUE,
-    isPartialInitialBoot: DEFAULT_IS_PARTIAL_INITIAL_BOOT,
-    isQualityOfServiceActive: DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE,
     loadFactorDangerValue: DEFAULT_LOAD_FACTOR_DANGER_VALUE,
     pingDangerValue: DEFAULT_PING_DANGER_VALUE,
     jitterDangerValue: DEFAULT_JITTER_DANGER_VALUE,
+    isPartialInitialBoot: DEFAULT_IS_PARTIAL_INITIAL_BOOT,
+    isQualityOfServiceActive: DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE,
 };
 
 export const WebSocketController = (board: Board, startDate: Date) => {
     let clientsList: Client[] = [];
 
-    const MODEL_WORKING_COMMANDS = Object.values(ModelsWorkingCommands);
-    const MODELS_COMMANDS_FOR_HOST = Object.values(ModelsCommandsForHost);
+    const MODEL_WORKING_COMMANDS = Object.values(ClientCommandsTypes);
+
+    const sendMessageHostClient = (messageType: string, message: any): void => {
+        const hostSocket = clientsList[0].getSocket();
+
+        if (!hostSocket) {
+            throw new Error("Cannot send message for host, host is undefined");
+        }
+
+        const serverMessage: IServerMessage = {
+            messageType: messageType,
+            message: message,
+        }
+
+        hostSocket.send(JSON.stringify(serverMessage));
+    }
 
     const sendMessageCurrentClient = (messageType: string, message: any, webSocketClient: WebSocket): void => {
         const serverMessage: IServerMessage = {
@@ -58,46 +72,48 @@ export const WebSocketController = (board: Board, startDate: Date) => {
     }
 
     const sendModelsActionsStates = (webSocketClient: WebSocket): void => {
+        const isModelsCreate = board.getisModelsCreate();
         const isModelsStart = board.getIsModelStart();
         const isModelsStop = board.getIsModelStop();
 
         const modelsActionsStatesMessage: IServerMessage = {
             messageType: ServerMessageTypes.MODELS_ACTIONS_STATES,
-            message: [isModelsStart, isModelsStop],
+            message: [isModelsCreate, isModelsStart, isModelsStop],
         }
 
         webSocketClient.send(JSON.stringify(modelsActionsStatesMessage));
     }
 
-    const ActionsConfigsList: Record<ModelsWorkingCommands, IActionConfig> = {
-        [ModelsWorkingCommands.CREATE]: {
+    const ActionsConfigsList: Record<ClientCommandsTypes, IActionConfig> = {
+        [ClientCommandsTypes.CREATE]: {
             updateBoardFunction: () => { board.updateSettingsConfig(loadedBoardSettingsConfig) },
             boardActionFunction: () => { board.create() },
             clientSendActionFunctions: [],
-            allClientsSendActionFunctions: [],
-            infoMessage: ServerInfoMessageTexts.CREATE_MODELS,
+            allClientsSendActionFunctions: [() => { sendMessageAllClients(ServerMessageTypes.MESSAGE, ServerInfoMessageTexts.CREATE_MODELS) }],
         },
-        [ModelsWorkingCommands.START]: {
+        [ClientCommandsTypes.START]: {
             updateBoardFunction: null,
             boardActionFunction: () => {
                 board.start();
                 startDate = new Date();
             },
             clientSendActionFunctions: [sendModelsActionsStates],
-            allClientsSendActionFunctions: [() => { sendMessageAllClients(ServerMessageTypes.CLEAR_CHARTS, "") }
+            allClientsSendActionFunctions: [() => { sendMessageAllClients(ServerMessageTypes.CLEAR_CHARTS, "") },
+            () => { sendMessageAllClients(ServerMessageTypes.MESSAGE, ServerInfoMessageTexts.START_MODELS) }
             ],
-            infoMessage: ServerInfoMessageTexts.START_MODELS,
         },
-        [ModelsWorkingCommands.STOP]: {
+        [ClientCommandsTypes.STOP]: {
             updateBoardFunction: null,
             boardActionFunction: () => { board.stop() },
             clientSendActionFunctions: [sendModelsActionsStates],
-            allClientsSendActionFunctions: [],
-            infoMessage: ServerInfoMessageTexts.STOP_MODELS,
+            allClientsSendActionFunctions: [() => { sendMessageAllClients(ServerMessageTypes.MESSAGE, ServerInfoMessageTexts.STOP_MODELS) }],
         },
     }
 
-    const boardAction = (boardActionFunction: () => void, clientSendActionFunctions: any[], allClientsSendActionFunctions: any[], webSocketClient: WebSocket, infoMessage: string): void => {
+    const boardAction = (updateBoardFunction: any, boardActionFunction: () => void, clientSendActionFunctions: any[], allClientsSendActionFunctions: any[], webSocketClient: WebSocket): void => {
+        if (updateBoardFunction) {
+            updateBoardFunction();
+        }
         boardActionFunction();
 
         clientSendActionFunctions.forEach((clientSendActionFunction) => {
@@ -105,8 +121,6 @@ export const WebSocketController = (board: Board, startDate: Date) => {
         });
 
         allClientsSendActionFunctions.forEach((allClientsSendActionFunction) => allClientsSendActionFunction());
-
-        sendMessageAllClients(ServerMessageTypes.MESSAGE, infoMessage);
     }
 
     const webSocketClientSetup = (webSocketClient: WebSocket, client: Client): void => {
@@ -123,27 +137,29 @@ export const WebSocketController = (board: Board, startDate: Date) => {
 
         clientsList.push(client);
 
-        boardAction(() => { board.create() }, [], [], webSocketClient, ServerInfoMessageTexts.CREATE_MODELS);
-
-        sendMessageCurrentClient(ServerMessageTypes.MODELS_WORKING_COMMANDS, MODELS_COMMANDS_FOR_HOST, webSocketClient);
+        sendMessageCurrentClient(ServerMessageTypes.MODELS_WORKING_COMMANDS, boardWorkCommandsConfig, webSocketClient);
 
         console.log("First client connected to server and get all commands!");
     }
 
-    const handleClientCommand = (webSocketClient: WebSocket, commandID: string) => {
-        if (!MODEL_WORKING_COMMANDS.includes(commandID as ModelsWorkingCommands)) {
+    const handleClientCommand = (webSocketClient: WebSocket, message: IClientMessage) => {
+        if (!MODEL_WORKING_COMMANDS.includes(message.commandID as ClientCommandsTypes)) {
             console.log("Unexpected command from client!");
             return;
         };
 
-        const actionConfigure: IActionConfig = ActionsConfigsList[commandID as ModelsWorkingCommands];
+        if (message.commandInfo !== COMMAND_INFO_WITHOUS_SETTINGS_CONFIG) {
+            loadedBoardSettingsConfig = message.commandInfo;
+        }
 
-        const modelActionFunction = actionConfigure.boardActionFunction;
+        const actionConfigure: IActionConfig = ActionsConfigsList[message.commandID as ClientCommandsTypes];
+
+        const updateBoardFunction = actionConfigure.updateBoardFunction;
+        const boardActionFunction = actionConfigure.boardActionFunction;
         const clientSendActionFunction = actionConfigure.clientSendActionFunctions;
         const allClientsSendActionFunctions = actionConfigure.allClientsSendActionFunctions;
-        const actionInfoMessage = actionConfigure.infoMessage;
 
-        boardAction(modelActionFunction, clientSendActionFunction, allClientsSendActionFunctions, webSocketClient, actionInfoMessage);
+        boardAction(updateBoardFunction, boardActionFunction, clientSendActionFunction, allClientsSendActionFunctions, webSocketClient);
     }
 
     const hanldeClientLeave = (leavedClientID: string) => {
@@ -177,10 +193,9 @@ export const WebSocketController = (board: Board, startDate: Date) => {
             webSocketClientSetup(webSocketClient, newClient);
 
             webSocketClient.on('message', (event) => {
-                // console.log(event);
-                const parsedString = event.toString("utf-8");
+                const parsedMessage: IClientMessage = JSON.parse(event.toString("utf-8"));
 
-                handleClientCommand(webSocketClient, parsedString);
+                handleClientCommand(webSocketClient, parsedMessage);
             });
             webSocketClient.on('close', () => { hanldeClientLeave(clientID) });
             webSocketClient.on("error", getWebSocketErrorStatus);

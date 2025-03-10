@@ -1,13 +1,36 @@
-export enum ModelsWorkingCommands {
+export enum ClientCommandsTypes {
     CREATE = "create",
     START = "start",
     STOP = "stop",
 }
 
-export enum ModelsCommandsForHost {
+export enum BoardWorkCommandsKeys {
+    CREATE = "create",
     START = "start",
     STOP = "stop",
 }
+
+export interface IBoardWorkCommandData {
+    commandKey: string;
+    isSendSettingsConfig: boolean;
+}
+
+export type TBoardWorkCommandsConfig = IBoardWorkCommandData[];
+
+export const boardWorkCommandsConfig: IBoardWorkCommandData[] = [
+    {
+        commandKey: BoardWorkCommandsKeys.CREATE,
+        isSendSettingsConfig: true,
+    },
+    {
+        commandKey: BoardWorkCommandsKeys.START,
+        isSendSettingsConfig: false,
+    },
+    {
+        commandKey: BoardWorkCommandsKeys.STOP,
+        isSendSettingsConfig: false,
+    },
+]
 
 export interface IServerMessage {
     messageType: string;
@@ -34,10 +57,11 @@ export interface IActionConfig {
     boardActionFunction: any;
     clientSendActionFunctions: any[];
     allClientsSendActionFunctions: any[];
-    infoMessage: string;
 }
 
 export interface IClientMessage {
     commandID: string;
     commandInfo: any;
 }
+
+export const COMMAND_INFO_WITHOUS_SETTINGS_CONFIG: string = "";
