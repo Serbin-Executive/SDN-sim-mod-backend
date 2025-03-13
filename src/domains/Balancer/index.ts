@@ -41,7 +41,7 @@ class Balancer {
         console.log();
     }
 
-    private getNeedModelsLoadsAnalysis(isQualityOfServiceActive: boolean, workTime: TBoardTime, delayValueToIntervalValueMultiplier: number, loadFactorDangerValue: number, pingDangerValue: number, jitterDangerValue: number): boolean {
+    private getNeedModelsLoadsAnalysis(isQualityOfServiceActive: boolean, workTime: TBoardTime, delayValueToIntervalValueMultiplier: number, loadFactorDangerValue: number, packetLostDangerValue: number, pingDangerValue: number, jitterDangerValue: number): boolean {
         if (!isQualityOfServiceActive) {
             for (let index = 0; index < this.controllersList.length; index++) {
                 const currentController = this.controllersList[index];
@@ -69,7 +69,7 @@ class Balancer {
 
             const currentParametersState = currentController.getParametersState(workTime);
 
-            if (currentParametersState.ping < pingDangerValue && currentParametersState.jitter < jitterDangerValue) {
+            if (currentParametersState.packetLost < packetLostDangerValue && currentParametersState.ping < pingDangerValue && currentParametersState.jitter < jitterDangerValue) {
                 continue;
             }
 
@@ -79,8 +79,8 @@ class Balancer {
         return false;
     }
 
-    public checkModelsLoadFactors(isQualityOfServiceActive: boolean, workTime: TBoardTime, sendFunction: any, delayValueToIntervalValueMultiplier: number, loadFactorDangerValue: number, maxSpawnAgentsValue: number, pingDangerValue: number, jitterDangerValue: number): void {
-        const isNeedModelsLoadsAnalysis: boolean = this.getNeedModelsLoadsAnalysis(isQualityOfServiceActive, workTime, delayValueToIntervalValueMultiplier, loadFactorDangerValue, pingDangerValue, jitterDangerValue);
+    public checkModelsLoadFactors(isQualityOfServiceActive: boolean, workTime: TBoardTime, sendFunction: any, delayValueToIntervalValueMultiplier: number, loadFactorDangerValue: number, maxSpawnAgentsValue: number, packetLostDangerValue: number, pingDangerValue: number, jitterDangerValue: number): void {
+        const isNeedModelsLoadsAnalysis: boolean = this.getNeedModelsLoadsAnalysis(isQualityOfServiceActive, workTime, delayValueToIntervalValueMultiplier, loadFactorDangerValue, packetLostDangerValue, pingDangerValue, jitterDangerValue);
 
         if (!isNeedModelsLoadsAnalysis) {
             return;

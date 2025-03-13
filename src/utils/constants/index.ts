@@ -18,6 +18,7 @@ export const DEFAULT_IS_PARTIAL_INITIAL_BOOT: boolean = false;
 export const DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE: boolean = false;
 
 export const DEFAULT_LOAD_FACTOR_DANGER_VALUE: number = 1;
+export const DEFAULT_PACKET_LOST_DANGER_VALUE: number = 0.9;
 export const DEFAULT_PING_DANGER_VALUE: number = 2000;
 export const DEFAULT_JITTER_DANGER_VALUE: number = 250;
 

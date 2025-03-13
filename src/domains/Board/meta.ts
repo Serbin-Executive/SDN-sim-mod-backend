@@ -22,6 +22,7 @@ export interface ISettingsConfig {
     maxDelayCapacity: number;
     delayValue: number;
     loadFactorDangerValue: number;
+    packetLostDangerValue: number;
     pingDangerValue: number;
     jitterDangerValue: number;
     isPartialInitialBoot: boolean;

@@ -6,7 +6,7 @@ import DelayElement from "../DelayElement";
 import SinkElement from "../SinkElement";
 import Controller from "../Controller";
 import Balancer from "../Balancer";
-import { addElementsInList, DEFAULT_DELAY_VALUE, DEFAULT_IS_PARTIAL_INITIAL_BOOT, DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE, DEFAULT_JITTER_DANGER_VALUE, DEFAULT_LOAD_FACTOR_DANGER_VALUE, DEFAULT_MAX_DELAY_CAPACITY, DEFAULT_MAX_QUEUE_CAPACITY, DEFAULT_MAX_SPAWN_AGENTS_VALUE, DEFAULT_MIN_DELAY_CAPACITY, DEFAULT_MIN_QUEUE_CAPACITY, DEFAULT_MIN_SPAWN_AGENTS_VALUE, DEFAULT_MODEL_SOURCE_ELEMENTS_COUNT_VALUE, DEFAULT_MODELS_COUNT_VALUE, DEFAULT_PING_DANGER_VALUE, DEFAULT_STATISTIC_INTERVAL_VALUE, DEFAULT_WORK_INTERVAL_VALUE, getPreviousElementsList, getRandomArbitrary, settingNextElementsInSequence } from "../../utils/constants";
+import { addElementsInList, DEFAULT_DELAY_VALUE, DEFAULT_IS_PARTIAL_INITIAL_BOOT, DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE, DEFAULT_JITTER_DANGER_VALUE, DEFAULT_LOAD_FACTOR_DANGER_VALUE, DEFAULT_MAX_DELAY_CAPACITY, DEFAULT_MAX_QUEUE_CAPACITY, DEFAULT_MAX_SPAWN_AGENTS_VALUE, DEFAULT_MIN_DELAY_CAPACITY, DEFAULT_MIN_QUEUE_CAPACITY, DEFAULT_MIN_SPAWN_AGENTS_VALUE, DEFAULT_MODEL_SOURCE_ELEMENTS_COUNT_VALUE, DEFAULT_MODELS_COUNT_VALUE, DEFAULT_PACKET_LOST_DANGER_VALUE, DEFAULT_PING_DANGER_VALUE, DEFAULT_STATISTIC_INTERVAL_VALUE, DEFAULT_WORK_INTERVAL_VALUE, getPreviousElementsList, getRandomArbitrary, settingNextElementsInSequence } from "../../utils/constants";
 import { ISettingsConfig, TBoardBalancer, TControllersList, TModelsInterval } from "./meta";
 import { TControllersStatesList } from "./meta";
 import { TModelsList, TBoardTime } from "../meta";
@@ -57,6 +57,7 @@ class Board {
             isPartialInitialBoot: DEFAULT_IS_PARTIAL_INITIAL_BOOT,
             isQualityOfServiceActive: DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE,
             loadFactorDangerValue: DEFAULT_LOAD_FACTOR_DANGER_VALUE,
+            packetLostDangerValue: DEFAULT_PACKET_LOST_DANGER_VALUE,
             pingDangerValue: DEFAULT_PING_DANGER_VALUE,
             jitterDangerValue: DEFAULT_JITTER_DANGER_VALUE,
         }
@@ -229,6 +230,7 @@ class Board {
         this.settingsConfig.maxDelayCapacity = newSettingsConfig.maxDelayCapacity;
         this.settingsConfig.delayValue = newSettingsConfig.delayValue;
         this.settingsConfig.loadFactorDangerValue = newSettingsConfig.loadFactorDangerValue;
+        this.settingsConfig.packetLostDangerValue = newSettingsConfig.packetLostDangerValue;
         this.settingsConfig.pingDangerValue = newSettingsConfig.pingDangerValue;
         this.settingsConfig.jitterDangerValue = newSettingsConfig.jitterDangerValue;
         this.settingsConfig.isPartialInitialBoot = newSettingsConfig.isPartialInitialBoot;
@@ -258,11 +260,11 @@ class Board {
             throw new Error("Cannot complete statistic interval action, balancer is undefined");
         }
 
-        const { isQualityOfServiceActive, delayValue, workIntervalValue, maxSpawnAgentsValue, loadFactorDangerValue, pingDangerValue, jitterDangerValue } = this.settingsConfig;
+        const { isQualityOfServiceActive, delayValue, workIntervalValue, maxSpawnAgentsValue, loadFactorDangerValue, packetLostDangerValue, pingDangerValue, jitterDangerValue } = this.settingsConfig;
 
         const delayValueToIntervalValueMultiplier = workIntervalValue / delayValue;
 
-        this.balancer.checkModelsLoadFactors(isQualityOfServiceActive, this.statisticTime, this.sendFunction, delayValueToIntervalValueMultiplier, loadFactorDangerValue, maxSpawnAgentsValue, pingDangerValue, jitterDangerValue);
+        this.balancer.checkModelsLoadFactors(isQualityOfServiceActive, this.statisticTime, this.sendFunction, delayValueToIntervalValueMultiplier, loadFactorDangerValue, maxSpawnAgentsValue, packetLostDangerValue, pingDangerValue, jitterDangerValue);
     }
 
     public modelsIntervalAction(): void {
