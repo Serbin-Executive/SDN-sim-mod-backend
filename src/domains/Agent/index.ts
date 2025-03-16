@@ -1,4 +1,4 @@
-import { TAgentId, TAgentTime, TModelID } from "../../utils/constants";
+import { TAgentId, TAgentTime } from "./meta";
 
 class Agent {
     private id: TAgentId;

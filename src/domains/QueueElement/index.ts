@@ -1,9 +1,9 @@
 import NetworkElement from "../NetworkElement";
 import Agent from "../Agent";
 import { SendRequestsLinkedList } from "../SendRequestsLinkedList";
-import { ISurroundingNetworkElements, TNetworkElementAgentsLostCount } from "../../utils/constants";
 import { TLostSinkElement } from "./meta";
 import { startDate } from "../..";
+import { ISurroundingNetworkElements, TNetworkElementAgentsLostCount } from "../meta";
 
 class QueueElement extends NetworkElement {
     private sendRequestsQueue: SendRequestsLinkedList;

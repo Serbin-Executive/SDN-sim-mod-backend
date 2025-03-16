@@ -1,11 +1,12 @@
 import DelayElement from "../../domains/DelayElement";
 import QueueElement from "../../domains/QueueElement";
-import { TLostSinkElement } from "../../domains/QueueElement/meta";
-import SinkElement from "../../domains/SinkElement";
 import SourceElement from "../../domains/SourceElement";
-import { DEFAULT_USED_DISK_SPACE, DELAY_CAPACITY, DELAY_VALUE, getRandomArbitrary, WORK_INTERVAL_VALUE } from "../../utils/constants";
+import SinkElement from "../../domains/SinkElement";
+import { TLostSinkElement } from "../../domains/QueueElement/meta";
+import { DEFAULT_USED_DISK_SPACE, getRandomArbitrary, DEFAULT_WORK_INTERVAL_VALUE, DEFAULT_DELAY_VALUE } from "../../utils/constants";
 import { MILLISECONDS_MULTIPLIER } from "./meta";
 import { TControllerParameter } from "../../domains/Controller/meta";
+
 
 export const MIN_DEFAULT_MEMORY_USAGE: TControllerParameter = 0.23;
 export const MAX_DEFAULT_MEMORY_USAGE: TControllerParameter = 0.27;
@@ -64,10 +65,12 @@ class ControllerParametersService {
         return lastAgentLeftTime - previousAgentLeftTime;
     }
 
-    public static getCPU(sourceElements: SourceElement[]): TControllerParameter {
-        const receiptIntensity: TControllerParameter = this.getNetworkTraffic(sourceElements) / (WORK_INTERVAL_VALUE / DELAY_VALUE);
+    public static getCPU(sourceElements: SourceElement[], delayElements: DelayElement[]): TControllerParameter {
+        const delaysCapacity: number = delayElements.reduce((delaysCapacity, delayElement) => delaysCapacity + delayElement.getCapacity(), 0)
+
+        const receiptIntensity: TControllerParameter = this.getNetworkTraffic(sourceElements) / (DEFAULT_WORK_INTERVAL_VALUE / DEFAULT_DELAY_VALUE);
         
-        const loadFactor: TControllerParameter = receiptIntensity * (DELAY_VALUE / MILLISECONDS_MULTIPLIER) / DELAY_CAPACITY;
+        const loadFactor: TControllerParameter = receiptIntensity * (DEFAULT_DELAY_VALUE / MILLISECONDS_MULTIPLIER) / delaysCapacity;
 
         return loadFactor <= 1 ? loadFactor : 1;
     }

@@ -2,7 +2,6 @@ import express, { type Express } from "express";
 import DefaultErrorHandler from "./middlewares/DefaultErrorHandler";
 import CORS from "./middlewares/CORS";
 import Board from "./domains/Board";
-// import { createModelsByHostCommand, startModels, stopModels, webSocketCreateConnection } from "./controllers/WebSocketController";
 import { WebSocketController } from "./controllers/WebSocketController";
 import { PORT } from "./utils/constants";
 import { checkUrl } from "./controllers/CheckUrlController";

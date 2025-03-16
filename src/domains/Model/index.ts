@@ -6,7 +6,10 @@ import SinkElement from "../SinkElement";
 import Agent from "../Agent";
 import { startDate } from "../..";
 import { randomUUID } from "crypto";
-import { IModelStateInfo, INetworElementState, ICurrentState, IStateInfoField, TWorkTime, getRandomArbitrary, MIN_SPAWN_AGENTS_VALUE, MAX_SPAWN_AGENTS_VALUE, TModelID, IModelStatistic, TModelStatesInfo, TObjectsStatesInfo, TStatesInfo, TStateInfo, TAgentsList } from "../../utils/constants";
+import { ICurrentState, TBoardTime } from "../meta";
+import { IModelStateInfo, IModelStatistic, INetworElementState, IStateInfoField, TModelID, TStateInfo } from "./meta";
+import { getRandomArbitrary } from "../../utils/constants";
+import ModelStatisticService from "../../services/ModelStatisticService";
 
 class Model {
     private ID: TModelID;
@@ -57,24 +60,9 @@ class Model {
         return this.statistic;
     }
 
-    private getStateInfo = (state: ICurrentState): TStateInfo => {
-        const statesListInfo: TStateInfo = Object.entries(state).map(([fieldName, fieldValue]) => {
-
-            const stateField: IStateInfoField = {
-                fieldName: fieldName,
-                fieldValue: String(fieldValue),
-            };
-
-            return stateField;
-        })
-
-        return statesListInfo;
-    }
-
-    public spawnAgents(): void {
+    public spawnAgents(minSpawnAgentsValue: number, maxSpawnAgentsValue: number ): void {
         const sourceElements = this.sourceElements;
-        // for (let agentIndex = 0; agentIndex < SPAWN_AGENTS_VALUE; agentIndex++) {
-        for (let agentIndex = 0; agentIndex < getRandomArbitrary(MIN_SPAWN_AGENTS_VALUE, MAX_SPAWN_AGENTS_VALUE); agentIndex++) {
+        for (let agentIndex = 0; agentIndex < getRandomArbitrary(minSpawnAgentsValue, maxSpawnAgentsValue); agentIndex++) {
             sourceElements.forEach((element) => {
                 const agent = new Agent();
 
@@ -91,8 +79,10 @@ class Model {
         }
     }
 
-    public getModelStateInfo = (workTime: TWorkTime): IModelStateInfo => {
+    public getModelStateInfo = (workTime: TBoardTime): IModelStateInfo => {
         const networkElements = this.networkElements;
+
+        console.log("\n\n\n");
         console.log(`Model ID: ${this.ID}\n`);
 
         const currentState: IModelStateInfo = {
@@ -130,27 +120,11 @@ class Model {
         return currentState;
     }
 
-    // public getNeedSendServiceCompletedAgentsStatesInfo(): TStatesInfo {
-    //     const serviceCompletedAgentsList: TAgentsList = [];
+    public getLoadFactor(workTime: TBoardTime, delayValueToIntervalValueMultiplier: number): number {
+        const currentModelStateInfo = this.getModelStateInfo(workTime);
 
-    //     // this.sinkElements.forEach((sinkElement) => {
-    //     //     const elementAgentList: TAgentsList = sinkElement.getAgentsList();
-
-    //     //     elementAgentList.forEach((agent) => {
-    //     //         serviceCompletedAgentsList.push(agent);
-    //     //     });
-    //     // });
-
-
-        
-    //     const serviceCompletedAgentsStatesInfo: TStatesInfo = serviceCompletedAgentsList.map((agent) => {
-    //         const agentState = agent.getCurrentState();
-
-    //         return this.getStateInfo(agentState);
-    //     });
-
-    //     return serviceCompletedAgentsStatesInfo;
-    // }
+        return ModelStatisticService.getLoadFactor(currentModelStateInfo, delayValueToIntervalValueMultiplier);
+    }
 
     public setSourceElements(sourceElements: SourceElement[]): void {
         this.sourceElements = sourceElements;
@@ -185,6 +159,20 @@ class Model {
         });
 
         this.clearAgents();
+    }
+
+    public addSourceElement(sourceElement: SourceElement): void {
+        this.networkElements.unshift(sourceElement);
+        
+        this.sourceElements.push(sourceElement);
+    }
+
+    public deleteSourceElement(deletedSourceElement: SourceElement): void {
+        const updatedNetworkElements = this.networkElements.filter((element) => element.getId() !== deletedSourceElement.getId());
+
+        this.setNetworkElements(updatedNetworkElements);
+        
+        this.sourceElements.shift();
     }
 
     public clearStatistic(): void {

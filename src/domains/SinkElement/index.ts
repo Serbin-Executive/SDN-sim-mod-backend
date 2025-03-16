@@ -1,8 +1,8 @@
 import Agent from "../Agent";
 import NetworkElement from "../NetworkElement";
-import { ISurroundingNetworkElements } from "../../utils/constants";
 import { startDate } from "../..";
 import { DEFAULT_LAST_AGENTS_STATISTIC, ILastAgentsStatistic } from "./meta";
+import { ISurroundingNetworkElements } from "../meta";
 
 class SinkElement extends NetworkElement {
     private lastAgentsStatistic: ILastAgentsStatistic;
