@@ -1,5 +1,5 @@
-import { TBatchedFunction } from "../meta";
 import { SendRequestsLinkedListNode } from "../SendRequestsLinkedListNode";
+import { TBatchedFunction } from "../SendRequestsLinkedListNode/meta";
 
 export class SendRequestsLinkedList {
     private firstNodeInQueue: SendRequestsLinkedListNode | null;

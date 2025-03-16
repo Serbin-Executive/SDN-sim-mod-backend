@@ -1,12 +1,15 @@
 import Agent from "../Agent";
-import { type ISurroundingNetworkElements, type TNetworkElementInitiator } from "../meta";
+import { ISurroundingNetworkElements, TNetworkElementInitiator } from "../meta";
 import NetworkElement from "../NetworkElement";
 
 class SourceElement extends NetworkElement {
+    private receiptIntensity: number;
+
     constructor() {
         super();
         this.capacity = Infinity;
         this.previousElements = null;
+        this.receiptIntensity = 0;
     }
 
     public trigger(initiator: TNetworkElementInitiator = "system", newAgent: Agent): void {
@@ -17,7 +20,13 @@ class SourceElement extends NetworkElement {
         this.setAgentsCount(this.agentsCount + 1);
         this.setAgentsCameCount(this.agentsCameCount + 1);
 
+        this.receiptIntensity++;
+
         this.nextElement.trigger(this, newAgent);
+    }
+
+    public getReceiptIntensity(): number {
+        return this.receiptIntensity;
     }
 
     public getSurroundingElements(): ISurroundingNetworkElements {
@@ -33,7 +42,16 @@ class SourceElement extends NetworkElement {
     public getCurrentState() {
         return {
             agentsLeftCount: this.agentsLeftCount,
+            receiptIntensity:this.receiptIntensity,
         }
+    }
+
+    public setReceiptIntensity(receiptIntensity: number): void {
+        this.receiptIntensity = receiptIntensity;
+    }
+
+    public clearReceiptIntensity(): void {
+        this.receiptIntensity = 0;
     }
 }
 

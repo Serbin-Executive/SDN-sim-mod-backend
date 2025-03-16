@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { TBatchedFunction } from "../meta";
+import { TBatchedFunction } from "./meta";
 
 export class SendRequestsLinkedListNode {
     private ID: string;

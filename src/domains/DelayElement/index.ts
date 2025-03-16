@@ -1,8 +1,9 @@
 import NetworkElement from "../NetworkElement";
 import EventEmitter from "events";
-import { ICurrentState, ISurroundingNetworkElements } from "../meta";
 import Agent from "../Agent";
+import { ICurrentState, ISurroundingNetworkElements } from "../meta";
 import { TServiceProcessList } from "./meta";
+
 
 class DelayElement extends NetworkElement {
     private delayValue: number;
@@ -15,22 +16,7 @@ class DelayElement extends NetworkElement {
         this.takeSignal = new EventEmitter();
     }
 
-    // public checkTakeAvailable(): void {
-    //     if (this.agentsCount >= this.capacity) {
-    //         this.isTakeAvailable = false;
-    //         return;
-    //     }
-
-    //     this.isTakeAvailable = true;
-    // }
-
     public trigger(initiator: NetworkElement, newAgent: Agent): void {
-        // this.checkTakeAvailable();
-
-        // if (this.agentsCount >= this.capacity) {
-        //     return false;
-        // }
-
         this.takeAgents(initiator, newAgent);
 
         this.startDelay(newAgent);
