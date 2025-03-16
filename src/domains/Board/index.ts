@@ -6,7 +6,7 @@ import DelayElement from "../DelayElement";
 import SinkElement from "../SinkElement";
 import Controller from "../Controller";
 import Balancer from "../Balancer";
-import { addElementsInList, DEFAULT_DELAY_VALUE, DEFAULT_IS_PARTIAL_INITIAL_BOOT, DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE, DEFAULT_JITTER_DANGER_VALUE, DEFAULT_LOAD_FACTOR_DANGER_VALUE, DEFAULT_MAX_DELAY_CAPACITY, DEFAULT_MAX_QUEUE_CAPACITY, DEFAULT_MAX_SPAWN_AGENTS_VALUE, DEFAULT_MIN_DELAY_CAPACITY, DEFAULT_MIN_QUEUE_CAPACITY, DEFAULT_MIN_SPAWN_AGENTS_VALUE, DEFAULT_MODEL_SOURCE_ELEMENTS_COUNT_VALUE, DEFAULT_MODELS_COUNT_VALUE, DEFAULT_PACKET_LOST_DANGER_VALUE, DEFAULT_PING_DANGER_VALUE, DEFAULT_STATISTIC_INTERVAL_VALUE, DEFAULT_WORK_INTERVAL_VALUE, getPreviousElementsList, getRandomArbitrary, settingNextElementsInSequence } from "../../utils/constants";
+import { addElementsInList, DEFAULT_DELAY_VALUE, DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE, DEFAULT_JITTER_DANGER_VALUE, DEFAULT_LOAD_FACTOR_DANGER_VALUE, DEFAULT_MAX_DELAY_CAPACITY, DEFAULT_MAX_QUEUE_CAPACITY, DEFAULT_MAX_SPAWN_AGENTS_VALUE, DEFAULT_MIN_DELAY_CAPACITY, DEFAULT_MIN_QUEUE_CAPACITY, DEFAULT_MIN_SPAWN_AGENTS_VALUE, DEFAULT_MODEL_SOURCE_ELEMENTS_COUNT_VALUE, DEFAULT_MODELS_COUNT_VALUE, DEFAULT_PACKET_LOST_DANGER_VALUE, DEFAULT_PING_DANGER_VALUE, DEFAULT_STATISTIC_INTERVAL_VALUE, DEFAULT_WORK_INTERVAL_VALUE, getPreviousElementsList, getRandomArbitrary, MILLISECONDS_TO_SECONDS_MULTIPLIER, settingNextElementsInSequence } from "../../utils/constants";
 import { ISettingsConfig, TBoardBalancer, TControllersList, TModelsInterval } from "./meta";
 import { TControllersStatesList } from "./meta";
 import { TModelsList, TBoardTime } from "../meta";
@@ -54,7 +54,6 @@ class Board {
             minDelayCapacity: DEFAULT_MIN_DELAY_CAPACITY,
             maxDelayCapacity: DEFAULT_MAX_DELAY_CAPACITY,
             delayValue: DEFAULT_DELAY_VALUE,
-            isPartialInitialBoot: DEFAULT_IS_PARTIAL_INITIAL_BOOT,
             isQualityOfServiceActive: DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE,
             loadFactorDangerValue: DEFAULT_LOAD_FACTOR_DANGER_VALUE,
             packetLostDangerValue: DEFAULT_PACKET_LOST_DANGER_VALUE,
@@ -148,7 +147,7 @@ class Board {
                 ModelStatisticService.getAgentsLostInModelCount(lastModelStateInfo);
 
             sendedModelsInfoList.sendedChartsDataList.push({
-                time: String(this.statisticTime),
+                time: String(this.statisticTime / MILLISECONDS_TO_SECONDS_MULTIPLIER),
                 loadFactor: String(currentLoadFactor),
                 queueLoad: String(currentQueueLoad),
             });
@@ -167,6 +166,10 @@ class Board {
 
     public getSettingsConfig(): ISettingsConfig {
         return this.settingsConfig;
+    }
+
+    public getQueueCapacitiesList(): number[] {
+        return this.modelsList.map((model) => model.getQueueElements()[0].getCapacity());
     }
 
     public setModelsList(modelsList: TModelsList): void {
@@ -233,7 +236,6 @@ class Board {
         this.settingsConfig.packetLostDangerValue = newSettingsConfig.packetLostDangerValue;
         this.settingsConfig.pingDangerValue = newSettingsConfig.pingDangerValue;
         this.settingsConfig.jitterDangerValue = newSettingsConfig.jitterDangerValue;
-        this.settingsConfig.isPartialInitialBoot = newSettingsConfig.isPartialInitialBoot;
         this.settingsConfig.isQualityOfServiceActive = newSettingsConfig.isQualityOfServiceActive;
     }
 
@@ -282,6 +284,10 @@ class Board {
     public statisticIntervalAction(): void {
         this.statisticTime += this.settingsConfig.statisticIntervalValue;
 
+        this.controllersList.forEach((controller) => {
+            controller.addNewParametersState(this.statisticTime);
+        })
+
         this.balancerCheck();
 
         const sendedModelsInfoList: ISendedModelsInfoList = this.getSendedModelsInfoList(this.modelsList);
@@ -313,7 +319,7 @@ class Board {
 
             for (let index = 0; index < this.settingsConfig.modelSourceElementsCountValue; index++) {
                 const sourceElement = new SourceElement();
-                
+
                 sourceElement.setPreviousElements(getPreviousElementsList());
                 sourceElement.setNextElement(queueElement);
 
@@ -372,10 +378,14 @@ class Board {
 
         this.clearSendingData();
 
+        this.controllersList.forEach((controller) => {
+            controller.setParametersStatesList([]);
+        })
+
         this.modelsWorkTimer = setInterval(() => this.modelsIntervalAction(), this.settingsConfig.workIntervalValue);
         this.sendModelsStatisticTimer = setInterval(() => this.statisticIntervalAction(), this.settingsConfig.statisticIntervalValue);
 
-        this.controllersList.forEach((controller) => controller.start());
+        // this.controllersList.forEach((controller) => controller.start());
 
         this.isModelsCreate = true;
         this.isModelsStop = false;
@@ -400,9 +410,9 @@ class Board {
             model.stop();
         })
 
-        this.controllersList.forEach((controller) => {
-            controller.stop();
-        })
+        // this.controllersList.forEach((controller) => {
+        //     controller.stop();
+        // })
 
         this.workTime = 0;
         this.statisticTime = 0;

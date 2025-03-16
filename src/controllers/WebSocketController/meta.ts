@@ -43,6 +43,7 @@ export const enum ServerMessageTypes {
     MODELS_STATES = "models states",
     MODELS_ACTIONS_STATES = "models actions states",
     CLEAR_CHARTS = "clear charts",
+    QUEUE_CAPACITIES = "queue capacities",
 }
 
 export const enum ServerInfoMessageTexts {

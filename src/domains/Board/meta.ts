@@ -25,6 +25,5 @@ export interface ISettingsConfig {
     packetLostDangerValue: number;
     pingDangerValue: number;
     jitterDangerValue: number;
-    isPartialInitialBoot: boolean;
     isQualityOfServiceActive: boolean;
 }

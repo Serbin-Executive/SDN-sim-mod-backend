@@ -1,5 +1,6 @@
 import { IModelStateInfo, INetworElementState, TModelStatesInfo, TStateInfo } from "../../domains/Model/meta";
-import { DELAY_VALUE_TO_INTERVAL_VALUE_MULTIPLIER, MILLISECONDS_MULTIPLIER, NetworkElementsTypes, StatisticFieldsNames } from "./meta";
+import { MILLISECONDS_TO_SECONDS_MULTIPLIER } from "../../utils/constants";
+import { NetworkElementsTypes, StatisticFieldsNames } from "./meta";
 
 class ModelStatisticService {
     public static getStatisticFieldValueByFieldName(statisticFields: TStateInfo, fieldName: string): number {
@@ -122,7 +123,7 @@ class ModelStatisticService {
         const delayValue: number = this.getDelayValue(modelLastState);
         const delayCapacity: number = this.getDelayCapacity(modelLastState);
 
-        return (receiptIntensity / delayValueToIntervalValueMultiplier) * (delayValue / MILLISECONDS_MULTIPLIER) / delayCapacity;
+        return (receiptIntensity / delayValueToIntervalValueMultiplier) * (delayValue / MILLISECONDS_TO_SECONDS_MULTIPLIER) / delayCapacity;
     }
 
     public static getLoadFactorsList(modelStatesList: TModelStatesInfo, delayValueToIntervalValueMultiplier: number): number[] {
