@@ -6,13 +6,13 @@ import DelayElement from "../DelayElement";
 import SinkElement from "../SinkElement";
 import Controller from "../Controller";
 import Balancer from "../Balancer";
+import ModelStatisticService from "../../services/ModelStatisticService";
 import { addElementsInList, DEFAULT_DELAY_VALUE, DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE, DEFAULT_JITTER_DANGER_VALUE, DEFAULT_LOAD_FACTOR_DANGER_VALUE, DEFAULT_MAX_DELAY_CAPACITY, DEFAULT_MAX_QUEUE_CAPACITY, DEFAULT_MAX_SPAWN_AGENTS_VALUE, DEFAULT_MIN_DELAY_CAPACITY, DEFAULT_MIN_QUEUE_CAPACITY, DEFAULT_MIN_SPAWN_AGENTS_VALUE, DEFAULT_MODEL_SOURCE_ELEMENTS_COUNT_VALUE, DEFAULT_MODELS_COUNT_VALUE, DEFAULT_PACKET_LOST_DANGER_VALUE, DEFAULT_PING_DANGER_VALUE, DEFAULT_STATISTIC_INTERVAL_VALUE, DEFAULT_WORK_INTERVAL_VALUE, getPreviousElementsList, getRandomArbitrary, MILLISECONDS_TO_SECONDS_MULTIPLIER, settingNextElementsInSequence } from "../../utils/constants";
-import { ISettingsConfig, TBoardBalancer, TControllersList, TModelsInterval } from "./meta";
+import { ISendableBoardSettingsConfig, ISettingsConfig, TBoardBalancer, TControllersList, TModelsInterval } from "./meta";
 import { TControllersStatesList } from "./meta";
 import { TModelsList, TBoardTime } from "../meta";
 import { IModelStateInfo, ISendedModelsInfoList, TModelID } from "../Model/meta";
 import { ServerMessageTypes } from "../../controllers/WebSocketController/meta";
-import ModelStatisticService from "../../services/ModelStatisticService";
 
 class Board {
     private modelsList: TModelsList;
@@ -39,7 +39,7 @@ class Board {
         this.sendModelsStatisticTimer = null;
         this.isModelsCreate = false
         this.isModelsStart = false;
-        this.isModelsStop = false;
+        this.isModelsStop = true;
         this.sendingData = [];
         this.sendFunction = null;
         this.settingsConfig = {
@@ -220,23 +220,23 @@ class Board {
         this.sendFunction = sendFunction;
     }
 
-    public updateSettingsConfig(newSettingsConfig: ISettingsConfig): void {
-        this.settingsConfig.modelsCountValue = newSettingsConfig.modelsCountValue;
-        this.settingsConfig.minSpawnAgentsValue = newSettingsConfig.minSpawnAgentsValue;
-        this.settingsConfig.maxSpawnAgentsValue = newSettingsConfig.maxSpawnAgentsValue;
-        this.settingsConfig.workIntervalValue = newSettingsConfig.workIntervalValue;
-        this.settingsConfig.statisticIntervalValue = newSettingsConfig.statisticIntervalValue;
-        this.settingsConfig.modelSourceElementsCountValue = newSettingsConfig.modelSourceElementsCountValue;
-        this.settingsConfig.minQueueCapacity = newSettingsConfig.minQueueCapacity;
-        this.settingsConfig.maxQueueCapacity = newSettingsConfig.maxQueueCapacity;
-        this.settingsConfig.minDelayCapacity = newSettingsConfig.minDelayCapacity;
-        this.settingsConfig.maxDelayCapacity = newSettingsConfig.maxDelayCapacity;
-        this.settingsConfig.delayValue = newSettingsConfig.delayValue;
-        this.settingsConfig.loadFactorDangerValue = newSettingsConfig.loadFactorDangerValue;
-        this.settingsConfig.packetLostDangerValue = newSettingsConfig.packetLostDangerValue;
-        this.settingsConfig.pingDangerValue = newSettingsConfig.pingDangerValue;
-        this.settingsConfig.jitterDangerValue = newSettingsConfig.jitterDangerValue;
-        this.settingsConfig.isQualityOfServiceActive = newSettingsConfig.isQualityOfServiceActive;
+    public updateSettingsConfig(sendedSettingsConfig: ISendableBoardSettingsConfig): void {
+        this.settingsConfig.modelsCountValue = sendedSettingsConfig.modelsSettings.fields["modelsCountValue"].value as number;
+        this.settingsConfig.minSpawnAgentsValue = sendedSettingsConfig.modelsSettings.fields["minSpawnAgentsValue"].value as number;
+        this.settingsConfig.maxSpawnAgentsValue = sendedSettingsConfig.modelsSettings.fields["maxSpawnAgentsValue"].value as number;
+        this.settingsConfig.workIntervalValue = sendedSettingsConfig.modelsSettings.fields["workIntervalValue"].value as number;
+        this.settingsConfig.statisticIntervalValue = sendedSettingsConfig.modelsSettings.fields["statisticIntervalValue"].value as number;
+        this.settingsConfig.modelSourceElementsCountValue = sendedSettingsConfig.modelsSettings.fields["modelSourceElementsCountValue"].value as number;
+        this.settingsConfig.minQueueCapacity = sendedSettingsConfig.modelsSettings.fields["minQueueCapacity"].value as number;
+        this.settingsConfig.maxQueueCapacity = sendedSettingsConfig.modelsSettings.fields["maxQueueCapacity"].value as number;
+        this.settingsConfig.minDelayCapacity = sendedSettingsConfig.modelsSettings.fields["minDelayCapacity"].value as number;
+        this.settingsConfig.maxDelayCapacity = sendedSettingsConfig.modelsSettings.fields["maxDelayCapacity"].value as number;
+        this.settingsConfig.delayValue = sendedSettingsConfig.modelsSettings.fields["delayValue"].value as number;
+        this.settingsConfig.loadFactorDangerValue = sendedSettingsConfig.modelsSettings.fields["loadFactorDangerValue"].value as number;
+        this.settingsConfig.packetLostDangerValue = sendedSettingsConfig.qualityOfServiceSettings.fields["packetLostDangerValue"].value as number;
+        this.settingsConfig.pingDangerValue = sendedSettingsConfig.qualityOfServiceSettings.fields["pingDangerValue"].value as number;
+        this.settingsConfig.jitterDangerValue = sendedSettingsConfig.qualityOfServiceSettings.fields["jitterDangerValue"].value as number;
+        this.settingsConfig.isQualityOfServiceActive = sendedSettingsConfig.qualityOfServiceSettings.isActive!;
     }
 
     public addModel(model: Model): void {
