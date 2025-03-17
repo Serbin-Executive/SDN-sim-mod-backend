@@ -14,7 +14,6 @@ export const DEFAULT_MIN_DELAY_CAPACITY: number = 2;
 export const DEFAULT_MAX_DELAY_CAPACITY: number = 40;
 
 export const DEFAULT_DELAY_VALUE: number = 1000;
-export const DEFAULT_IS_PARTIAL_INITIAL_BOOT: boolean = false;
 export const DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE: boolean = false;
 
 export const DEFAULT_LOAD_FACTOR_DANGER_VALUE: number = 1;
@@ -23,11 +22,13 @@ export const DEFAULT_PING_DANGER_VALUE: number = 2000;
 export const DEFAULT_JITTER_DANGER_VALUE: number = 250;
 
 export const PORT: number = 5500;
-export const EXPRESS_APP_ALLOWED_CORS_URL: string = "http://localhost:3000";
+export const EXPRESS_APP_ALLOWED_CORS_URL: string = "http://localhost:5173";
 
 export const DEFAULT_USED_DISK_SPACE: number = 0.4;
 
 export const WEB_CLIENT_PORT: number = 3001;
+
+export const MILLISECONDS_TO_SECONDS_MULTIPLIER: number = 1000;
 
 export const getRandomArbitrary = (min: number, max: number) => {
     return Math.floor(Math.random() * (max - min + 1)) + min;

@@ -39,10 +39,13 @@ export interface IServerMessage {
 
 export const enum ServerMessageTypes {
     MESSAGE = "message",
-    MODELS_WORKING_COMMANDS = "models working commands",
+    BOARD_WORKING_COMMANDS = "board working commands",
     MODELS_STATES = "models states",
-    MODELS_ACTIONS_STATES = "models actions states",
+    BOARD_ACTIONS_STATES = "board actions states",
     CLEAR_CHARTS = "clear charts",
+    MODELS_QUEUE_CAPACITIES = "models queue capacities",
+    BOARD_SETTINGS_CONFIG = "board settings config",
+    BOARD_SETTINGS_CONFIG_RANGES = "board settings config ranges",
 }
 
 export const enum ServerInfoMessageTexts {
@@ -50,6 +53,7 @@ export const enum ServerInfoMessageTexts {
     CREATE_MODELS = "MODELS CREATED",
     START_MODELS = "MODELS STARTED",
     STOP_MODELS = "MODELS STOPPED",
+    GET_SETUP_DATA = "YOU GET SETUP DATA",
 }
 
 export interface IActionConfig {

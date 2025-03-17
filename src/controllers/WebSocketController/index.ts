@@ -1,30 +1,14 @@
 import WebSocket from "ws";
 import Board from "../../domains/Board";
+import BoardSettingsConfigService from "../../services/BoardSettingsConfigService";
 import { Client } from "../../domains/Client";
 import { randomUUID } from "crypto";
 import { boardWorkCommandsConfig, ClientCommandsTypes, COMMAND_INFO_WITHOUS_SETTINGS_CONFIG, IActionConfig, IClientMessage, IServerMessage, ServerInfoMessageTexts, ServerMessageTypes } from "./meta";
-import { DEFAULT_DELAY_VALUE, DEFAULT_IS_PARTIAL_INITIAL_BOOT, DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE, DEFAULT_JITTER_DANGER_VALUE, DEFAULT_LOAD_FACTOR_DANGER_VALUE, DEFAULT_MAX_DELAY_CAPACITY, DEFAULT_MAX_QUEUE_CAPACITY, DEFAULT_MAX_SPAWN_AGENTS_VALUE, DEFAULT_MIN_DELAY_CAPACITY, DEFAULT_MIN_QUEUE_CAPACITY, DEFAULT_MIN_SPAWN_AGENTS_VALUE, DEFAULT_MODEL_SOURCE_ELEMENTS_COUNT_VALUE, DEFAULT_MODELS_COUNT_VALUE, DEFAULT_PACKET_LOST_DANGER_VALUE, DEFAULT_PING_DANGER_VALUE, DEFAULT_STATISTIC_INTERVAL_VALUE, DEFAULT_WORK_INTERVAL_VALUE, WEB_CLIENT_PORT } from "../../utils/constants";
-import { ISettingsConfig } from "../../domains/Board/meta";
+import { WEB_CLIENT_PORT } from "../../utils/constants";
+import { ISendableBoardSettingsConfig, TBoardSettingsConfigRanges } from "../../domains/Board/meta";
 
-let loadedBoardSettingsConfig: ISettingsConfig = {
-    modelsCountValue: DEFAULT_MODELS_COUNT_VALUE,
-    minSpawnAgentsValue: DEFAULT_MIN_SPAWN_AGENTS_VALUE,
-    maxSpawnAgentsValue: DEFAULT_MAX_SPAWN_AGENTS_VALUE,
-    workIntervalValue: DEFAULT_WORK_INTERVAL_VALUE,
-    statisticIntervalValue: DEFAULT_STATISTIC_INTERVAL_VALUE,
-    modelSourceElementsCountValue: DEFAULT_MODEL_SOURCE_ELEMENTS_COUNT_VALUE,
-    minQueueCapacity: DEFAULT_MIN_QUEUE_CAPACITY,
-    maxQueueCapacity: DEFAULT_MAX_QUEUE_CAPACITY,
-    minDelayCapacity: DEFAULT_MIN_DELAY_CAPACITY,
-    maxDelayCapacity: DEFAULT_MAX_DELAY_CAPACITY,
-    delayValue: DEFAULT_DELAY_VALUE,
-    loadFactorDangerValue: DEFAULT_LOAD_FACTOR_DANGER_VALUE,
-    packetLostDangerValue: DEFAULT_PACKET_LOST_DANGER_VALUE,
-    pingDangerValue: DEFAULT_PING_DANGER_VALUE,
-    jitterDangerValue: DEFAULT_JITTER_DANGER_VALUE,
-    isPartialInitialBoot: DEFAULT_IS_PARTIAL_INITIAL_BOOT,
-    isQualityOfServiceActive: DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE,
-};
+let sendableBoardSettingsConfig: ISendableBoardSettingsConfig = BoardSettingsConfigService.getDefaultBoardSettingsConfig();
+let boardSettingsConfigRanges: TBoardSettingsConfigRanges = BoardSettingsConfigService.getBoardSettingsConfigRanges();
 
 export const WebSocketController = (board: Board, startDate: Date) => {
     let clientsList: Client[] = [];
@@ -78,18 +62,27 @@ export const WebSocketController = (board: Board, startDate: Date) => {
         const isModelsStop = board.getIsModelStop();
 
         const modelsActionsStatesMessage: IServerMessage = {
-            messageType: ServerMessageTypes.MODELS_ACTIONS_STATES,
+            messageType: ServerMessageTypes.BOARD_ACTIONS_STATES,
             message: [isModelsCreate, isModelsStart, isModelsStop],
         }
 
         webSocketClient.send(JSON.stringify(modelsActionsStatesMessage));
     }
 
+    const sendQueueCapacities = (webSocketClient: WebSocket): void => {
+        const queueCapacitiesMessage: IServerMessage = {
+            messageType: ServerMessageTypes.MODELS_QUEUE_CAPACITIES,
+            message: board.getQueueCapacitiesList(),
+        }
+
+        webSocketClient.send(JSON.stringify(queueCapacitiesMessage));
+    }
+
     const ActionsConfigsList: Record<ClientCommandsTypes, IActionConfig> = {
         [ClientCommandsTypes.CREATE]: {
-            updateBoardFunction: () => { board.updateSettingsConfig(loadedBoardSettingsConfig) },
+            updateBoardFunction: () => { board.updateSettingsConfig(sendableBoardSettingsConfig) },
             boardActionFunction: () => { board.create() },
-            clientSendActionFunctions: [],
+            clientSendActionFunctions: [sendQueueCapacities],
             allClientsSendActionFunctions: [() => { sendMessageAllClients(ServerMessageTypes.MESSAGE, ServerInfoMessageTexts.CREATE_MODELS) }],
         },
         [ClientCommandsTypes.START]: {
@@ -138,7 +131,12 @@ export const WebSocketController = (board: Board, startDate: Date) => {
 
         clientsList.push(client);
 
-        sendMessageCurrentClient(ServerMessageTypes.MODELS_WORKING_COMMANDS, boardWorkCommandsConfig, webSocketClient);
+        sendMessageCurrentClient(ServerMessageTypes.BOARD_WORKING_COMMANDS, boardWorkCommandsConfig, webSocketClient);
+        sendMessageCurrentClient(ServerMessageTypes.BOARD_SETTINGS_CONFIG_RANGES, boardSettingsConfigRanges, webSocketClient);
+        sendMessageCurrentClient(ServerMessageTypes.BOARD_SETTINGS_CONFIG, sendableBoardSettingsConfig, webSocketClient);
+        sendModelsActionsStates(webSocketClient);
+
+        sendMessageCurrentClient(ServerMessageTypes.MESSAGE, ServerInfoMessageTexts.GET_SETUP_DATA, webSocketClient);
 
         console.log("First client connected to server and get all commands!");
     }
@@ -150,7 +148,7 @@ export const WebSocketController = (board: Board, startDate: Date) => {
         };
 
         if (message.commandInfo !== COMMAND_INFO_WITHOUS_SETTINGS_CONFIG) {
-            loadedBoardSettingsConfig = message.commandInfo;
+            sendableBoardSettingsConfig = message.commandInfo;
         }
 
         const actionConfigure: IActionConfig = ActionsConfigsList[message.commandID as ClientCommandsTypes];

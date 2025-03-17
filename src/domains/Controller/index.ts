@@ -1,23 +1,23 @@
 import ControllerParametersService from "../../services/ControllerParametersService";
 import Model from "../Model";
 import { randomUUID } from "crypto";
-import { CONTROLLER_CHECK_INTERVAL_TIME, TControllerID, TServicedModel, TControllerParameter, TParametersStatesList, IParametersState, MAX_PARAMETER_LOAD_VALUE, DEFAULT_PARAMETERS_DANGER_VALUE } from "./meta";
+import { TControllerID, TServicedModel, TParametersStatesList, IParametersState, MAX_PARAMETER_LOAD_VALUE, DEFAULT_PARAMETERS_DANGER_VALUE } from "./meta";
 import { TBoardTime } from "../meta";
-import { TModelsInterval } from "../Board/meta";
 import { ServerMessageTypes } from "../../controllers/WebSocketController/meta";
+import { MILLISECONDS_TO_SECONDS_MULTIPLIER } from "../../utils/constants";
 
 class Controller {
     private ID: TControllerID;
     private servicedModel: TServicedModel;
-    private workTime: TBoardTime;
-    private checkTimer: TModelsInterval;
+    // private workTime: TBoardTime;
+    // private checkTimer: TModelsInterval;
     private parametersStatesList: TParametersStatesList;
 
     constructor() {
         this.ID = randomUUID();
         this.servicedModel = null;
-        this.workTime = 0;
-        this.checkTimer = null;
+        // this.workTime = 0;
+        // this.checkTimer = null;
         this.parametersStatesList = [];
     }
 
@@ -29,9 +29,9 @@ class Controller {
         return this.servicedModel;
     }
 
-    public getCheckTimer(): TModelsInterval {
-        return this.checkTimer;
-    }
+    // public getCheckTimer(): TModelsInterval {
+    //     return this.checkTimer;
+    // }
 
     public getParametersStatesList(): TParametersStatesList {
         return this.parametersStatesList;
@@ -51,7 +51,7 @@ class Controller {
         }
 
         return {
-            time: workTime,
+            time: workTime / MILLISECONDS_TO_SECONDS_MULTIPLIER,
             CPU: ControllerParametersService.getCPU(servicedModel.getSourceElements(), servicedModel.getDelayElements()),
             usedDiskSpace: ControllerParametersService.getUsedDiskSpace(servicedModel.getQueueElements()),
             memoryUsage: ControllerParametersService.getMemoryUsage(servicedModel.getQueueElements(), servicedModel.getDelayElements()),
@@ -82,9 +82,9 @@ class Controller {
         this.servicedModel = servicedModel;
     }
 
-    public setCheckTimer(checkTimer: TModelsInterval): void {
-        this.checkTimer = checkTimer;
-    }
+    // public setCheckTimer(checkTimer: TModelsInterval): void {
+    //     this.checkTimer = checkTimer;
+    // }
 
     public setParametersStatesList(parametersStatesList: TParametersStatesList): void {
         this.parametersStatesList = parametersStatesList;
@@ -106,27 +106,33 @@ class Controller {
         console.log();
     }
 
-    public checkIntervalAction(): void {
-        this.workTime += CONTROLLER_CHECK_INTERVAL_TIME;
-
-        const newParametersState = this.getParametersState(this.workTime)
+    public addNewParametersState(workTime: TBoardTime): void {
+        const newParametersState = this.getParametersState(workTime);
 
         this.parametersStatesList.push(newParametersState);
-
-        // this.printParameters(newParametersState);
     }
 
-    public start(): void {
-        this.checkTimer = setInterval(() => this.checkIntervalAction(), CONTROLLER_CHECK_INTERVAL_TIME)
-    }
+    // public checkIntervalAction(): void {
+    //     this.workTime += CONTROLLER_CHECK_INTERVAL_TIME;
 
-    public stop(): void {
-        if (!this.checkTimer) {
-            throw new Error("Cannot stop models, models has not been started yet");
-        }
+    //     const newParametersState = this.getParametersState(this.workTime)
 
-        clearInterval(this.checkTimer);
-    }
+    //     this.parametersStatesList.push(newParametersState);
+
+    //     // this.printParameters(newParametersState);
+    // }
+
+    // public start(): void {
+    //     this.checkTimer = setInterval(() => this.checkIntervalAction(), CONTROLLER_CHECK_INTERVAL_TIME)
+    // }
+
+    // public stop(): void {
+    //     if (!this.checkTimer) {
+    //         throw new Error("Cannot stop models, models has not been started yet");
+    //     }
+
+    //     clearInterval(this.checkTimer);
+    // }
 
     public movedServicedModelSinkElement(recipientModel: Model, sendFunction: any, sendingModelIndex: number, recipientModelIndex: number): void {
         if (!this.servicedModel) {

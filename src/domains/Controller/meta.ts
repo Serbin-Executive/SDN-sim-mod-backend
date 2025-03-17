@@ -16,7 +16,5 @@ export interface IParametersState {
 }
 export type TParametersStatesList = IParametersState[];
 
-export const CONTROLLER_CHECK_INTERVAL_TIME: number = 1000;
-
 export const DEFAULT_PARAMETERS_DANGER_VALUE: number = 1;
 export const MAX_PARAMETER_LOAD_VALUE: number = 10;

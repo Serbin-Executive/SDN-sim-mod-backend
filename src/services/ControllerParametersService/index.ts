@@ -3,8 +3,7 @@ import QueueElement from "../../domains/QueueElement";
 import SourceElement from "../../domains/SourceElement";
 import SinkElement from "../../domains/SinkElement";
 import { TLostSinkElement } from "../../domains/QueueElement/meta";
-import { DEFAULT_USED_DISK_SPACE, getRandomArbitrary, DEFAULT_WORK_INTERVAL_VALUE, DEFAULT_DELAY_VALUE } from "../../utils/constants";
-import { MILLISECONDS_MULTIPLIER } from "./meta";
+import { DEFAULT_USED_DISK_SPACE, getRandomArbitrary, DEFAULT_WORK_INTERVAL_VALUE, DEFAULT_DELAY_VALUE, MILLISECONDS_TO_SECONDS_MULTIPLIER } from "../../utils/constants";
 import { TControllerParameter } from "../../domains/Controller/meta";
 
 
@@ -70,7 +69,7 @@ class ControllerParametersService {
 
         const receiptIntensity: TControllerParameter = this.getNetworkTraffic(sourceElements) / (DEFAULT_WORK_INTERVAL_VALUE / DEFAULT_DELAY_VALUE);
         
-        const loadFactor: TControllerParameter = receiptIntensity * (DEFAULT_DELAY_VALUE / MILLISECONDS_MULTIPLIER) / delaysCapacity;
+        const loadFactor: TControllerParameter = receiptIntensity * (DEFAULT_DELAY_VALUE / MILLISECONDS_TO_SECONDS_MULTIPLIER) / delaysCapacity;
 
         return loadFactor <= 1 ? loadFactor : 1;
     }

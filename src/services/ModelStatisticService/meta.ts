@@ -1,5 +1,4 @@
 export const DELAY_VALUE_TO_INTERVAL_VALUE_MULTIPLIER: number = 2;
-export const MILLISECONDS_MULTIPLIER: number = 1000;
 
 export const enum NetworkElementsTypes {
     SOURCE = "SourceElement",
