@@ -73,4 +73,13 @@ export interface IRangeSettingData {
     initialValue: number;
 };
 
-export type TBoardSettingsConfigRanges = Record<string, IRangeSettingData>; 
+export type TBoardSettingsConfigRanges = Record<string, IRangeSettingData>;
+
+export interface IModelElementsCapacities {
+    queueCapacity: number;
+    delayCapacity: number;
+    maxQueueCapacity: number;
+    maxDelayCapacity: number;
+}
+
+export type TBoardCapacities = IModelElementsCapacities[];

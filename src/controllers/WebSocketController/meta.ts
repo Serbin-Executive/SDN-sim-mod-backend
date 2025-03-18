@@ -43,7 +43,7 @@ export const enum ServerMessageTypes {
     MODELS_STATES = "models states",
     BOARD_ACTIONS_STATES = "board actions states",
     CLEAR_CHARTS = "clear charts",
-    MODELS_QUEUE_CAPACITIES = "models queue capacities",
+    BOARD_CAPACITIES_LIST = "board capacities list",
     BOARD_SETTINGS_CONFIG = "board settings config",
     BOARD_SETTINGS_CONFIG_RANGES = "board settings config ranges",
 }

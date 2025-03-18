@@ -5,7 +5,7 @@ import { Client } from "../../domains/Client";
 import { randomUUID } from "crypto";
 import { boardWorkCommandsConfig, ClientCommandsTypes, COMMAND_INFO_WITHOUS_SETTINGS_CONFIG, IActionConfig, IClientMessage, IServerMessage, ServerInfoMessageTexts, ServerMessageTypes } from "./meta";
 import { WEB_CLIENT_PORT } from "../../utils/constants";
-import { ISendableBoardSettingsConfig, TBoardSettingsConfigRanges } from "../../domains/Board/meta";
+import { ISendableBoardSettingsConfig, TBoardCapacities, TBoardSettingsConfigRanges } from "../../domains/Board/meta";
 
 let sendableBoardSettingsConfig: ISendableBoardSettingsConfig = BoardSettingsConfigService.getDefaultBoardSettingsConfig();
 let boardSettingsConfigRanges: TBoardSettingsConfigRanges = BoardSettingsConfigService.getBoardSettingsConfigRanges();
@@ -69,20 +69,20 @@ export const WebSocketController = (board: Board, startDate: Date) => {
         webSocketClient.send(JSON.stringify(modelsActionsStatesMessage));
     }
 
-    const sendQueueCapacities = (webSocketClient: WebSocket): void => {
-        const queueCapacitiesMessage: IServerMessage = {
-            messageType: ServerMessageTypes.MODELS_QUEUE_CAPACITIES,
-            message: board.getQueueCapacitiesList(),
+    const sendBoardCapacities = (webSocketClient: WebSocket): void => {
+        const boardCapacitiesMessage: IServerMessage = {
+            messageType: ServerMessageTypes.BOARD_CAPACITIES_LIST,
+            message: board.getCapacitiesList(),
         }
 
-        webSocketClient.send(JSON.stringify(queueCapacitiesMessage));
+        webSocketClient.send(JSON.stringify(boardCapacitiesMessage));
     }
 
     const ActionsConfigsList: Record<ClientCommandsTypes, IActionConfig> = {
         [ClientCommandsTypes.CREATE]: {
             updateBoardFunction: () => { board.updateSettingsConfig(sendableBoardSettingsConfig) },
             boardActionFunction: () => { board.create() },
-            clientSendActionFunctions: [sendQueueCapacities],
+            clientSendActionFunctions: [sendBoardCapacities],
             allClientsSendActionFunctions: [() => { sendMessageAllClients(ServerMessageTypes.MESSAGE, ServerInfoMessageTexts.CREATE_MODELS) }],
         },
         [ClientCommandsTypes.START]: {
