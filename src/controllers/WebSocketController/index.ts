@@ -82,7 +82,7 @@ export const WebSocketController = (board: Board, startDate: Date) => {
         [ClientCommandsTypes.CREATE]: {
             updateBoardFunction: () => { board.updateSettingsConfig(sendableBoardSettingsConfig) },
             boardActionFunction: () => { board.create() },
-            clientSendActionFunctions: [sendBoardCapacities],
+            clientSendActionFunctions: [sendBoardCapacities, sendModelsActionsStates],
             allClientsSendActionFunctions: [() => { sendMessageAllClients(ServerMessageTypes.MESSAGE, ServerInfoMessageTexts.CREATE_MODELS) }],
         },
         [ClientCommandsTypes.START]: {
@@ -134,6 +134,7 @@ export const WebSocketController = (board: Board, startDate: Date) => {
         sendMessageCurrentClient(ServerMessageTypes.BOARD_WORKING_COMMANDS, boardWorkCommandsConfig, webSocketClient);
         sendMessageCurrentClient(ServerMessageTypes.BOARD_SETTINGS_CONFIG_RANGES, boardSettingsConfigRanges, webSocketClient);
         sendMessageCurrentClient(ServerMessageTypes.BOARD_SETTINGS_CONFIG, sendableBoardSettingsConfig, webSocketClient);
+
         sendModelsActionsStates(webSocketClient);
 
         sendMessageCurrentClient(ServerMessageTypes.MESSAGE, ServerInfoMessageTexts.GET_SETUP_DATA, webSocketClient);
