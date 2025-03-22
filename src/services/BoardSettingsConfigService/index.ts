@@ -1,80 +1,98 @@
-import { BoardSettingsConfigActiveChangerLabels, BoardSettingsConfigFieldsLabels, ISendableBoardSettingsConfig, TBoardSettingsConfigRanges } from "../../domains/Board/meta";
+import { BoardSettingsConfigBlocksTitles, BoardSettingsConfigFieldsInfoList, BoardSettingsConfigFieldsLabels, ISendableBoardSettingsConfig, TBoardSettingsConfigRanges } from "../../domains/Board/meta";
 import { DEFAULT_DELAY_VALUE, DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE, DEFAULT_JITTER_DANGER_VALUE, DEFAULT_LOAD_FACTOR_DANGER_VALUE, DEFAULT_MAX_DELAY_CAPACITY, DEFAULT_MAX_QUEUE_CAPACITY, DEFAULT_MAX_SPAWN_AGENTS_VALUE, DEFAULT_MIN_DELAY_CAPACITY, DEFAULT_MIN_QUEUE_CAPACITY, DEFAULT_MIN_SPAWN_AGENTS_VALUE, DEFAULT_MODEL_SOURCE_ELEMENTS_COUNT_VALUE, DEFAULT_MODELS_COUNT_VALUE, DEFAULT_PACKET_LOST_DANGER_VALUE, DEFAULT_PING_DANGER_VALUE, DEFAULT_STATISTIC_INTERVAL_VALUE, DEFAULT_WORK_INTERVAL_VALUE } from "../../utils/constants";
 
 class BoardSettingsConfigService {
     public static getDefaultBoardSettingsConfig(): ISendableBoardSettingsConfig {
         return {
             modelsSettings: {
+                title: BoardSettingsConfigBlocksTitles.BOARD_SETTINGS,
                 fields: {
                     modelsCountValue: {
                         label: BoardSettingsConfigFieldsLabels.MODELS_COUNT_VALUE,
                         value: DEFAULT_MODELS_COUNT_VALUE,
+                        info: BoardSettingsConfigFieldsInfoList.MODELS_COUNT_VALUE,
                     },
                     minSpawnAgentsValue: {
                         label: BoardSettingsConfigFieldsLabels.MIN_SPAWN_AGENTS_VALUE,
                         value: DEFAULT_MIN_SPAWN_AGENTS_VALUE,
+                        info: BoardSettingsConfigFieldsInfoList.MIN_SPAWN_AGENTS_VALUE,  // Add info field
                     },
                     maxSpawnAgentsValue: {
                         label: BoardSettingsConfigFieldsLabels.MAX_SPAWN_AGENTS_VALUE,
                         value: DEFAULT_MAX_SPAWN_AGENTS_VALUE,
+                        info: BoardSettingsConfigFieldsInfoList.MAX_SPAWN_AGENTS_VALUE,  // Add info field
                     },
                     workIntervalValue: {
                         label: BoardSettingsConfigFieldsLabels.WORK_INTERVAL_VALUE,
                         value: DEFAULT_WORK_INTERVAL_VALUE,
+                        info: BoardSettingsConfigFieldsInfoList.WORK_INTERVAL_VALUE,  // Add info field
                     },
                     statisticIntervalValue: {
                         label: BoardSettingsConfigFieldsLabels.STATISTIC_INTERVAL_VALUE,
                         value: DEFAULT_STATISTIC_INTERVAL_VALUE,
+                        info: BoardSettingsConfigFieldsInfoList.STATISTIC_INTERVAL_VALUE,  // Add info field
                     },
                     modelSourceElementsCountValue: {
                         label: BoardSettingsConfigFieldsLabels.MODEL_SOURCE_ELEMENTS_COUNT_VALUE,
                         value: DEFAULT_MODEL_SOURCE_ELEMENTS_COUNT_VALUE,
+                        info: BoardSettingsConfigFieldsInfoList.MODEL_SOURCE_ELEMENTS_COUNT_VALUE,  // Add info field
                     },
                     minQueueCapacity: {
                         label: BoardSettingsConfigFieldsLabels.MIN_QUEUE_CAPACITY,
                         value: DEFAULT_MIN_QUEUE_CAPACITY,
+                        info: BoardSettingsConfigFieldsInfoList.MIN_QUEUE_CAPACITY,  // Add info field
                     },
                     maxQueueCapacity: {
                         label: BoardSettingsConfigFieldsLabels.MAX_QUEUE_CAPACITY,
                         value: DEFAULT_MAX_QUEUE_CAPACITY,
+                        info: BoardSettingsConfigFieldsInfoList.MAX_QUEUE_CAPACITY,  // Add info field
                     },
                     minDelayCapacity: {
                         label: BoardSettingsConfigFieldsLabels.MIN_DELAY_CAPACITY,
                         value: DEFAULT_MIN_DELAY_CAPACITY,
+                        info: BoardSettingsConfigFieldsInfoList.MIN_DELAY_CAPACITY,  // Add info field
                     },
                     maxDelayCapacity: {
                         label: BoardSettingsConfigFieldsLabels.MAX_DELAY_CAPACITY,
                         value: DEFAULT_MAX_DELAY_CAPACITY,
+                        info: BoardSettingsConfigFieldsInfoList.MAX_DELAY_CAPACITY,  // Add info field
                     },
                     delayValue: {
                         label: BoardSettingsConfigFieldsLabels.DELAY_VALUE,
                         value: DEFAULT_DELAY_VALUE,
+                        info: BoardSettingsConfigFieldsInfoList.DELAY_VALUE,
                     },
                     loadFactorDangerValue: {
+
                         label: BoardSettingsConfigFieldsLabels.LOAD_FACTOR_DANGER_VALUE,
                         value: DEFAULT_LOAD_FACTOR_DANGER_VALUE,
+                        info: BoardSettingsConfigFieldsInfoList.LOAD_FACTOR_DANGER_VALUE,
                     },
                 },
             },
             qualityOfServiceSettings: {
+                title: BoardSettingsConfigBlocksTitles.QUALITY_OF_SERVICE_ACTIVE,
                 isActive: DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE,
-                activeChangerLabel: BoardSettingsConfigActiveChangerLabels.IS_QUALITY_OF_SERVICE_ACTIVE,
                 fields: {
                     packetLostDangerValue: {
                         label: BoardSettingsConfigFieldsLabels.PACKET_LOST_DANGER_VALUE,
                         value: DEFAULT_PACKET_LOST_DANGER_VALUE,
+                        info: BoardSettingsConfigFieldsInfoList.PACKET_LOST_DANGER_VALUE,
                     },
                     pingDangerValue: {
                         label: BoardSettingsConfigFieldsLabels.PING_DANGER_VALUE,
                         value: DEFAULT_PING_DANGER_VALUE,
+                        info: BoardSettingsConfigFieldsInfoList.PING_DANGER_VALUE,
                     },
                     jitterDangerValue: {
                         label: BoardSettingsConfigFieldsLabels.JITTER_DANGER_VALUE,
                         value: DEFAULT_JITTER_DANGER_VALUE,
+                        info: BoardSettingsConfigFieldsInfoList.JITTER_DANGER_VALUE,
                     },
                 },
             },
-        }
+        };
+
     }
 
     public static getBoardSettingsConfigRanges(): TBoardSettingsConfigRanges {

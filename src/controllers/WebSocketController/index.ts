@@ -5,7 +5,7 @@ import { Client } from "../../domains/Client";
 import { randomUUID } from "crypto";
 import { boardWorkCommandsConfig, ClientCommandsTypes, COMMAND_INFO_WITHOUS_SETTINGS_CONFIG, IActionConfig, IClientMessage, IServerMessage, ServerInfoMessageTexts, ServerMessageTypes } from "./meta";
 import { WEB_CLIENT_PORT } from "../../utils/constants";
-import { ISendableBoardSettingsConfig, TBoardCapacities, TBoardSettingsConfigRanges } from "../../domains/Board/meta";
+import { ISendableBoardSettingsConfig, TBoardSettingsConfigRanges } from "../../domains/Board/meta";
 
 let sendableBoardSettingsConfig: ISendableBoardSettingsConfig = BoardSettingsConfigService.getDefaultBoardSettingsConfig();
 let boardSettingsConfigRanges: TBoardSettingsConfigRanges = BoardSettingsConfigService.getBoardSettingsConfigRanges();
@@ -72,7 +72,7 @@ export const WebSocketController = (board: Board, startDate: Date) => {
     const sendBoardCapacities = (webSocketClient: WebSocket): void => {
         const boardCapacitiesMessage: IServerMessage = {
             messageType: ServerMessageTypes.BOARD_CAPACITIES_LIST,
-            message: board.getCapacitiesList(),
+            message: board.getModelsRatings(),
         }
 
         webSocketClient.send(JSON.stringify(boardCapacitiesMessage));
