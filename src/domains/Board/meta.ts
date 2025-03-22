@@ -110,7 +110,14 @@ export interface IModelRatingInfo {
 export type TModelsRatings = IModelRatingInfo[];
 
 export const enum ModelRatingInfoList {
-    QUEUE = "This model queue efficiency rating relatively to maximum efficiency in this experiment",
-    DELAY = "This model delay efficiency rating relatively to maximum efficiency in this experiment",
-    GENERAL = "This model general efficiency rating relatively to maximum efficiency in this experiment",
+    QUEUE = "This model queue efficiency rating relatively to maximum efficiency in this experiment.",
+    DELAY = "This model delay efficiency rating relatively to maximum efficiency in this experiment.",
+    GENERAL = "This model general efficiency rating relatively to maximum efficiency in this experiment.",
+}
+
+export const enum ModelAdditionalInfoList {
+    AGENTS_CAME_IN_MODEL = "This number show, how many agents go to the model of all time of the experiment.",
+    AGENTS_LEFT_THROUGH_MODEL = "This number show, how many agents left the model after successfull service of all time of the experiment.",
+    AGENTS_IN_MODEL = "This number show, how agents service in model on the moment last taking statistic.",
+    AGENTS_LOST = "This number show, how many agents didn't serviced in the model of all time of the experiment.",
 }

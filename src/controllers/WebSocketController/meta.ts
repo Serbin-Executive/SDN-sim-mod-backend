@@ -41,6 +41,7 @@ export const enum ServerMessageTypes {
     MESSAGE = "message",
     BOARD_WORKING_COMMANDS = "board working commands",
     MODELS_STATES = "models states",
+    MODELS_ADDITIONAL_INFO = "models additional info",
     BOARD_ACTIONS_STATES = "board actions states",
     CLEAR_CHARTS = "clear charts",
     BOARD_CAPACITIES_LIST = "board capacities list",

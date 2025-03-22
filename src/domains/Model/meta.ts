@@ -37,16 +37,16 @@ export interface ISendedChartsData {
 
 export type TSendedChartsDataList = ISendedChartsData[];
 
+export interface IModelAdditionalInfo {
+    value: string;
+    info: string;
+}
+
 export interface ISendedModelAdditionalInfo {
-    agentsCameInModelCount: string;
-    agentsLeftThroughModelCount: string;
-    agentsInModelCount: string;
-    agentsLostCount: string;
+    agentsCameInModelCount: IModelAdditionalInfo;
+    agentsLeftThroughModelCount: IModelAdditionalInfo;
+    agentsInModelCount: IModelAdditionalInfo;
+    agentsLostCount: IModelAdditionalInfo;
 }
 
-export type TSendedModelsAdditionalInfoList = ISendedModelAdditionalInfo[];
-
-export interface ISendedModelsInfoList {
-    sendedChartsDataList: TSendedChartsDataList;
-    sendedModelsAdditionalInfoList: TSendedModelsAdditionalInfoList;
-}
+export type TSendedModelsAdditionalInfoList = ISendedModelAdditionalInfo[]
