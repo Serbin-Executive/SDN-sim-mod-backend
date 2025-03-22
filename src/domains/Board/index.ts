@@ -8,7 +8,7 @@ import Controller from "../Controller";
 import Balancer from "../Balancer";
 import ModelStatisticService from "../../services/ModelStatisticService";
 import { addElementsInList, DEFAULT_DELAY_VALUE, DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE, DEFAULT_JITTER_DANGER_VALUE, DEFAULT_LOAD_FACTOR_DANGER_VALUE, DEFAULT_MAX_DELAY_CAPACITY, DEFAULT_MAX_QUEUE_CAPACITY, DEFAULT_MAX_SPAWN_AGENTS_VALUE, DEFAULT_MIN_DELAY_CAPACITY, DEFAULT_MIN_QUEUE_CAPACITY, DEFAULT_MIN_SPAWN_AGENTS_VALUE, DEFAULT_MODEL_SOURCE_ELEMENTS_COUNT_VALUE, DEFAULT_MODELS_COUNT_VALUE, DEFAULT_PACKET_LOST_DANGER_VALUE, DEFAULT_PING_DANGER_VALUE, DEFAULT_STATISTIC_INTERVAL_VALUE, DEFAULT_WORK_INTERVAL_VALUE, getPreviousElementsList, getRandomArbitrary, MILLISECONDS_TO_SECONDS_MULTIPLIER, settingNextElementsInSequence } from "../../utils/constants";
-import { IModelElementsCapacities, ISendableBoardSettingsConfig, ISettingsConfig, TBoardBalancer, TBoardCapacities, TControllersList, TModelsInterval } from "./meta";
+import { TModelsRatings, IModelRating, ISendableBoardSettingsConfig, ISettingsConfig, TBoardBalancer, TControllersList, TModelsInterval, ModelRatingInfoList, IModelRatingInfo } from "./meta";
 import { TControllersStatesList } from "./meta";
 import { TModelsList, TBoardTime } from "../meta";
 import { IModelStateInfo, ISendedModelsInfoList, TModelID } from "../Model/meta";
@@ -168,21 +168,37 @@ class Board {
         return this.settingsConfig;
     }
 
-    public getCapacitiesList(): TBoardCapacities {
-        const capacitiesList: TBoardCapacities = [];
+    public getModelsRatings(): TModelsRatings {
+        const modelsRatings: TModelsRatings = [];
 
         this.modelsList.forEach((model) => {
-            const capacityData: IModelElementsCapacities = {
-                queueCapacity: model.getQueueElements()[0].getCapacity(),
-                delayCapacity: model.getDelayElements()[0].getCapacity(),
-                maxQueueCapacity: this.settingsConfig.maxQueueCapacity,
-                maxDelayCapacity: this.settingsConfig.maxDelayCapacity,
-            } as IModelElementsCapacities;
+            const currentQueueCapacity: number = model.getQueueElements()[0].getCapacity();
+            const currentDelayCapacity: number = model.getDelayElements()[0].getCapacity();
+            const currentGeneralCapacity = currentQueueCapacity + currentDelayCapacity;
 
-            capacitiesList.push(capacityData);
+            const capacityData: IModelRatingInfo = {
+                queue: {
+                    currentValue: currentQueueCapacity,
+                    maximumValue: this.settingsConfig.maxQueueCapacity,
+                    info: ModelRatingInfoList.QUEUE,
+                },
+                delay: {
+                    currentValue: currentDelayCapacity,
+                    maximumValue: this.settingsConfig.maxDelayCapacity,
+                    info: ModelRatingInfoList.DELAY,
+                },
+                general: {
+                    currentValue: currentGeneralCapacity,
+                    maximumValue: this.settingsConfig.maxQueueCapacity + this.settingsConfig.maxDelayCapacity,
+                    info: ModelRatingInfoList.GENERAL,
+                }
+
+            };
+
+            modelsRatings.push(capacityData);
         });
 
-        return capacitiesList;
+        return modelsRatings;
     }
 
     public getDelayCapacitiesList(): number[] {
