@@ -7,13 +7,13 @@ import SinkElement from "../SinkElement";
 import Controller from "../Controller";
 import Balancer from "../Balancer";
 import ModelStatisticService from "../../services/ModelStatisticService";
+import BoardSettingsConfigService from "../../services/BoardSettingsConfigService";
 import { addElementsInList, DEFAULT_DELAY_VALUE, DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE, DEFAULT_JITTER_DANGER_VALUE, DEFAULT_LOAD_FACTOR_DANGER_VALUE, DEFAULT_MAX_DELAY_CAPACITY, DEFAULT_MAX_QUEUE_CAPACITY, DEFAULT_MAX_SPAWN_AGENTS_VALUE, DEFAULT_MIN_DELAY_CAPACITY, DEFAULT_MIN_QUEUE_CAPACITY, DEFAULT_MIN_SPAWN_AGENTS_VALUE, DEFAULT_MODEL_SOURCE_ELEMENTS_COUNT_VALUE, DEFAULT_MODELS_COUNT_VALUE, DEFAULT_PACKET_LOST_DANGER_VALUE, DEFAULT_PING_DANGER_VALUE, DEFAULT_STATISTIC_INTERVAL_VALUE, DEFAULT_WORK_INTERVAL_VALUE, getPreviousElementsList, getRandomArbitrary, MILLISECONDS_TO_SECONDS_MULTIPLIER, settingNextElementsInSequence } from "../../utils/constants";
 import { TModelsRatings, ISendableBoardSettingsConfig, ISettingsConfig, TBoardBalancer, TControllersList, TModelsInterval, ModelRatingInfoList, IModelRatingInfo } from "./meta";
 import { TControllersStatesList } from "./meta";
 import { TModelsList, TBoardTime } from "../meta";
 import { IModelStateInfo, TModelID, TSendedModelsAdditionalInfoList, TSendedChartsDataList } from "../Model/meta";
 import { ServerMessageTypes } from "../../controllers/WebSocketController/meta";
-import BoardSettingsConfigService from "../../services/BoardSettingsConfigService";
 
 class Board {
     private modelsList: TModelsList;
@@ -39,7 +39,7 @@ class Board {
         this.modelsWorkTimer = null;
         this.sendModelsStatisticTimer = null;
         this.isModelsCreate = false
-        this.isModelsStart = false;
+        this.isModelsStart = true;
         this.isModelsStop = true;
         this.sendingData = [];
         this.sendFunction = null;
@@ -320,7 +320,6 @@ class Board {
 
         this.balancerCheck();
 
-        // const sendedModelsInfoList: ISendedModelsInfoList = this.getSendedModelsInfoList(this.modelsList);
         const {sendedChartsDataList, sendedModelsAdditionalInfoList} = this.getSendedBoarData(this.modelsList);
 
         this.sendFunction(ServerMessageTypes.MODELS_STATES, sendedChartsDataList);
@@ -343,7 +342,6 @@ class Board {
             const queueElements: QueueElement[] = [];
             const delayElements: DelayElement[] = [];
 
-            // const sourceElement = new SourceElement();
             const queueElement = new QueueElement();
             const delayElement = new DelayElement();
             const sinkElement = new SinkElement();
@@ -361,7 +359,6 @@ class Board {
                 addElementsInList(networkElements, sourceElement);
             }
 
-            // addElementsInList(sourceElements, sourceElement);
             addElementsInList(networkElements, queueElement, delayElement, sinkElement);
             addElementsInList(queueElements, queueElement);
             addElementsInList(delayElements, delayElement);
@@ -369,8 +366,6 @@ class Board {
             delayElement.setPreviousElements(getPreviousElementsList(queueElement));
             sinkElement.setPreviousElements(getPreviousElementsList(delayElement));
             lostSinkElement.setPreviousElements(getPreviousElementsList(queueElement));
-
-            // settingNextElementsInSequence(networkElements);
 
             queueElement.setNextElement(delayElement);
             delayElement.setNextElement(sinkElement);
@@ -401,6 +396,8 @@ class Board {
 
             console.log("\nCREATE SUCCESS\n");
         }
+
+        this.isModelsStart = false;
     }
 
     public start(): void {
@@ -416,8 +413,6 @@ class Board {
 
         this.modelsWorkTimer = setInterval(() => this.modelsIntervalAction(), this.settingsConfig.workIntervalValue);
         this.sendModelsStatisticTimer = setInterval(() => this.statisticIntervalAction(), this.settingsConfig.statisticIntervalValue);
-
-        // this.controllersList.forEach((controller) => controller.start());
 
         this.isModelsCreate = true;
         this.isModelsStop = false;
@@ -441,10 +436,6 @@ class Board {
         this.modelsList.forEach((model) => {
             model.stop();
         })
-
-        // this.controllersList.forEach((controller) => {
-        //     controller.stop();
-        // })
 
         this.workTime = 0;
         this.statisticTime = 0;
