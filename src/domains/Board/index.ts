@@ -8,11 +8,12 @@ import Controller from "../Controller";
 import Balancer from "../Balancer";
 import ModelStatisticService from "../../services/ModelStatisticService";
 import { addElementsInList, DEFAULT_DELAY_VALUE, DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE, DEFAULT_JITTER_DANGER_VALUE, DEFAULT_LOAD_FACTOR_DANGER_VALUE, DEFAULT_MAX_DELAY_CAPACITY, DEFAULT_MAX_QUEUE_CAPACITY, DEFAULT_MAX_SPAWN_AGENTS_VALUE, DEFAULT_MIN_DELAY_CAPACITY, DEFAULT_MIN_QUEUE_CAPACITY, DEFAULT_MIN_SPAWN_AGENTS_VALUE, DEFAULT_MODEL_SOURCE_ELEMENTS_COUNT_VALUE, DEFAULT_MODELS_COUNT_VALUE, DEFAULT_PACKET_LOST_DANGER_VALUE, DEFAULT_PING_DANGER_VALUE, DEFAULT_STATISTIC_INTERVAL_VALUE, DEFAULT_WORK_INTERVAL_VALUE, getPreviousElementsList, getRandomArbitrary, MILLISECONDS_TO_SECONDS_MULTIPLIER, settingNextElementsInSequence } from "../../utils/constants";
-import { TModelsRatings, IModelRating, ISendableBoardSettingsConfig, ISettingsConfig, TBoardBalancer, TControllersList, TModelsInterval, ModelRatingInfoList, IModelRatingInfo } from "./meta";
+import { TModelsRatings, ISendableBoardSettingsConfig, ISettingsConfig, TBoardBalancer, TControllersList, TModelsInterval, ModelRatingInfoList, IModelRatingInfo } from "./meta";
 import { TControllersStatesList } from "./meta";
 import { TModelsList, TBoardTime } from "../meta";
-import { IModelStateInfo, ISendedModelsInfoList, TModelID } from "../Model/meta";
+import { IModelStateInfo, TModelID, TSendedModelsAdditionalInfoList, TSendedChartsDataList } from "../Model/meta";
 import { ServerMessageTypes } from "../../controllers/WebSocketController/meta";
+import BoardSettingsConfigService from "../../services/BoardSettingsConfigService";
 
 class Board {
     private modelsList: TModelsList;
@@ -120,16 +121,13 @@ class Board {
         return this.sendFunction;
     }
 
-    public getSendedModelsInfoList(modelsList: TModelsList): ISendedModelsInfoList {
-        const sendedModelsInfoList: ISendedModelsInfoList = {
-            sendedChartsDataList: [],
-            sendedModelsAdditionalInfoList: [],
-        };
+    public getSendedBoarData(modelsList: TModelsList) {
+        const sendedChartsDataList: TSendedChartsDataList = [];
+        const sendedModelsAdditionalInfoList: TSendedModelsAdditionalInfoList = []
 
         const { workIntervalValue, delayValue } = this.settingsConfig;
 
         const delayValueToIntervalValueMultiplier = workIntervalValue / delayValue;
-
 
         modelsList.forEach((model) => {
             const lastModelStateInfo: IModelStateInfo = model.getModelStateInfo(this.statisticTime);
@@ -146,22 +144,21 @@ class Board {
             const agentsLostCount =
                 ModelStatisticService.getAgentsLostInModelCount(lastModelStateInfo);
 
-            sendedModelsInfoList.sendedChartsDataList.push({
+            sendedChartsDataList.push({
                 time: String(this.statisticTime / MILLISECONDS_TO_SECONDS_MULTIPLIER),
                 loadFactor: String(currentLoadFactor),
                 queueLoad: String(currentQueueLoad),
             });
-            sendedModelsInfoList.sendedModelsAdditionalInfoList.push(
-                {
-                    agentsCameInModelCount: String(agentsCameInModelCount),
-                    agentsLeftThroughModelCount: String(agentsLeftThroughModelCount),
-                    agentsInModelCount: String(agentsInModelCount),
-                    agentsLostCount: String(agentsLostCount),
-                }
+
+            sendedModelsAdditionalInfoList.push(
+                BoardSettingsConfigService.getModelsAdditionalInfo(agentsCameInModelCount, agentsLeftThroughModelCount, agentsInModelCount, agentsLostCount)
             )
         })
 
-        return sendedModelsInfoList;
+        return {
+            sendedChartsDataList,
+            sendedModelsAdditionalInfoList,
+        }
     }
 
     public getSettingsConfig(): ISettingsConfig {
@@ -323,9 +320,11 @@ class Board {
 
         this.balancerCheck();
 
-        const sendedModelsInfoList: ISendedModelsInfoList = this.getSendedModelsInfoList(this.modelsList);
+        // const sendedModelsInfoList: ISendedModelsInfoList = this.getSendedModelsInfoList(this.modelsList);
+        const {sendedChartsDataList, sendedModelsAdditionalInfoList} = this.getSendedBoarData(this.modelsList);
 
-        this.sendFunction(ServerMessageTypes.MODELS_STATES, sendedModelsInfoList);
+        this.sendFunction(ServerMessageTypes.MODELS_STATES, sendedChartsDataList);
+        this.sendFunction(ServerMessageTypes.MODELS_ADDITIONAL_INFO, sendedModelsAdditionalInfoList);
     }
 
     public create(): void {

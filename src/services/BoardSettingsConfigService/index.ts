@@ -1,4 +1,5 @@
-import { BoardSettingsConfigBlocksTitles, BoardSettingsConfigFieldsInfoList, BoardSettingsConfigFieldsLabels, ISendableBoardSettingsConfig, TBoardSettingsConfigRanges } from "../../domains/Board/meta";
+import { BoardSettingsConfigBlocksTitles, BoardSettingsConfigFieldsInfoList, BoardSettingsConfigFieldsLabels, ISendableBoardSettingsConfig, ModelAdditionalInfoList, TBoardSettingsConfigRanges } from "../../domains/Board/meta";
+import { ISendedModelAdditionalInfo } from "../../domains/Model/meta";
 import { DEFAULT_DELAY_VALUE, DEFAULT_IS_QUALITY_OF_SERVICE_ACTIVE, DEFAULT_JITTER_DANGER_VALUE, DEFAULT_LOAD_FACTOR_DANGER_VALUE, DEFAULT_MAX_DELAY_CAPACITY, DEFAULT_MAX_QUEUE_CAPACITY, DEFAULT_MAX_SPAWN_AGENTS_VALUE, DEFAULT_MIN_DELAY_CAPACITY, DEFAULT_MIN_QUEUE_CAPACITY, DEFAULT_MIN_SPAWN_AGENTS_VALUE, DEFAULT_MODEL_SOURCE_ELEMENTS_COUNT_VALUE, DEFAULT_MODELS_COUNT_VALUE, DEFAULT_PACKET_LOST_DANGER_VALUE, DEFAULT_PING_DANGER_VALUE, DEFAULT_STATISTIC_INTERVAL_VALUE, DEFAULT_WORK_INTERVAL_VALUE } from "../../utils/constants";
 
 class BoardSettingsConfigService {
@@ -189,6 +190,28 @@ class BoardSettingsConfigService {
             },
         };
     }
+    
+    public static getModelsAdditionalInfo(agentsCameInModelCount: number, agentsLeftThroughModelCount: number, agentsInModelCount: number, agentsLostCount: number): ISendedModelAdditionalInfo {
+        return {
+            agentsCameInModelCount: {
+                value: String(agentsCameInModelCount),
+                info: ModelAdditionalInfoList.AGENTS_CAME_IN_MODEL,
+            },
+            agentsLeftThroughModelCount: {
+                value: String(agentsLeftThroughModelCount),
+                info: ModelAdditionalInfoList.AGENTS_LEFT_THROUGH_MODEL,
+            },
+            agentsInModelCount: {
+                value: String(agentsInModelCount),
+                info: ModelAdditionalInfoList.AGENTS_IN_MODEL,
+            },
+            agentsLostCount: {
+                value: String(agentsLostCount),
+                info: ModelAdditionalInfoList.AGENTS_LOST,
+            },
+        }
+    }
+
 }
 
 export default BoardSettingsConfigService;
