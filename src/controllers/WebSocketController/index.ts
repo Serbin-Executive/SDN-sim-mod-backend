@@ -69,7 +69,7 @@ export const WebSocketController = (board: Board, startDate: Date) => {
         webSocketClient.send(JSON.stringify(modelsActionsStatesMessage));
     }
 
-    const sendBoardCapacities = (webSocketClient: WebSocket): void => {
+    const sendModelsRatings = (webSocketClient: WebSocket): void => {
         const boardCapacitiesMessage: IServerMessage = {
             messageType: ServerMessageTypes.BOARD_CAPACITIES_LIST,
             message: board.getModelsRatings(),
@@ -82,7 +82,7 @@ export const WebSocketController = (board: Board, startDate: Date) => {
         [ClientCommandsTypes.CREATE]: {
             updateBoardFunction: () => { board.updateSettingsConfig(sendableBoardSettingsConfig) },
             boardActionFunction: () => { board.create() },
-            clientSendActionFunctions: [sendBoardCapacities, sendModelsActionsStates],
+            clientSendActionFunctions: [sendModelsRatings, sendModelsActionsStates],
             allClientsSendActionFunctions: [() => { sendMessageAllClients(ServerMessageTypes.MESSAGE, ServerInfoMessageTexts.CREATE_MODELS) }],
         },
         [ClientCommandsTypes.START]: {
@@ -130,6 +130,10 @@ export const WebSocketController = (board: Board, startDate: Date) => {
         client.setIsHost(true);
 
         clientsList.push(client);
+
+        if (board.getModelsList().length) {
+            sendModelsRatings(webSocketClient);
+        }
 
         sendMessageCurrentClient(ServerMessageTypes.BOARD_WORKING_COMMANDS, boardWorkCommandsConfig, webSocketClient);
         sendMessageCurrentClient(ServerMessageTypes.BOARD_SETTINGS_CONFIG_RANGES, boardSettingsConfigRanges, webSocketClient);

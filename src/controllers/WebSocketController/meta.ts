@@ -13,6 +13,7 @@ export enum BoardWorkCommandsKeys {
 export interface IBoardWorkCommandData {
     commandKey: string;
     isSendSettingsConfig: boolean;
+    isCloseBoardControlPanel: boolean;
 }
 
 export type TBoardWorkCommandsConfig = IBoardWorkCommandData[];
@@ -21,14 +22,17 @@ export const boardWorkCommandsConfig: IBoardWorkCommandData[] = [
     {
         commandKey: BoardWorkCommandsKeys.CREATE,
         isSendSettingsConfig: true,
+        isCloseBoardControlPanel: false,
     },
     {
         commandKey: BoardWorkCommandsKeys.START,
         isSendSettingsConfig: false,
+        isCloseBoardControlPanel: true,
     },
     {
         commandKey: BoardWorkCommandsKeys.STOP,
         isSendSettingsConfig: false,
+        isCloseBoardControlPanel: false,
     },
 ]
 
