@@ -46,44 +46,44 @@ export interface ISendableBoardSettingsConfig {
 }
 
 export const enum BoardSettingsConfigFieldsLabels {
-    MODELS_COUNT_VALUE = "Models count value",
-    MIN_SPAWN_AGENTS_VALUE = "Minimum spawn agents value",
-    MAX_SPAWN_AGENTS_VALUE = "Maximum spawn agents value",
-    WORK_INTERVAL_VALUE = "Work Interval value, ms",
-    STATISTIC_INTERVAL_VALUE = "Statistic interval value, ms",
-    MODEL_SOURCE_ELEMENTS_COUNT_VALUE = "Model SourceElements count value",
-    MIN_QUEUE_CAPACITY = "Minimum QueueElement capacity",
-    MAX_QUEUE_CAPACITY = "Maximum QueueElement capacity",
-    MIN_DELAY_CAPACITY = "Minimum DelayElement capacity",
-    MAX_DELAY_CAPACITY = "Maximum DelayElement capacity",
-    DELAY_VALUE = "Delay value, ms",
-    LOAD_FACTOR_DANGER_VALUE = "Load factor danger value",
-    PACKET_LOST_DANGER_VALUE = "Packet lost danger value",
-    PING_DANGER_VALUE = "Ping danger value, ms",
-    JITTER_DANGER_VALUE = "Jitter danger value, ms",
+    MODELS_COUNT_VALUE = "Models",
+    MIN_SPAWN_AGENTS_VALUE = "Minimum Agents per tick",
+    MAX_SPAWN_AGENTS_VALUE = "Maximum Agents per tick",
+    WORK_INTERVAL_VALUE = "Interval between ticks, ms",
+    STATISTIC_INTERVAL_VALUE = "Polling frequency, ms",
+    MODEL_SOURCE_ELEMENTS_COUNT_VALUE = "Agent Sources per Model",
+    MIN_QUEUE_CAPACITY = "Minimum Queue capacity",
+    MAX_QUEUE_CAPACITY = "Maximum Queue capacity",
+    MIN_DELAY_CAPACITY = "Minimum Server capacity",
+    MAX_DELAY_CAPACITY = "Maximum Server capacity",
+    DELAY_VALUE = "Agent processing time, ms",
+    LOAD_FACTOR_DANGER_VALUE = "Load factor boundary value",
+    PACKET_LOST_DANGER_VALUE = "Agents loss boundary value",
+    PING_DANGER_VALUE = "Ping boundary value, ms",
+    JITTER_DANGER_VALUE = "Jitter boundary value, ms",
 }
 
 export const enum BoardSettingsConfigFieldsInfoList {
-    MODELS_COUNT_VALUE = "This slider set, how many models will create in board.",
-    MIN_SPAWN_AGENTS_VALUE = "This slider set the minimum agents count that will come in models in each working time interval.",
-    MAX_SPAWN_AGENTS_VALUE = "This slider set the maximum agents count that will come in models in each working time interval.",
-    WORK_INTERVAL_VALUE = "This slider set time interval in ms for new agents to appear.",
-    STATISTIC_INTERVAL_VALUE = "This slider set time interval in ms for to collect statistic. Also each this time interval will be applied to the transfer of agents form one model to another.",
-    MODEL_SOURCE_ELEMENTS_COUNT_VALUE = "This slider set, hox many Source Elements will make in each model in board.",
-    MIN_QUEUE_CAPACITY = "This slider set the minimum Queue Element capacity count in the models in the experiment.",
-    MAX_QUEUE_CAPACITY = "This slider set the maximum Queue Element capacity count in the models in the experiment.",
-    MIN_DELAY_CAPACITY = "This slider set the minimum Delay Element capacity count in the models in the experiment.",
-    MAX_DELAY_CAPACITY = "This slider set the minimum Delay Element capacity count in the models in the experiment.",
-    DELAY_VALUE = "This slider set time interval in ms for agents service in Delay Elements.",
-    LOAD_FACTOR_DANGER_VALUE = "This slider set such is the value of load factor in models in which the mechanism for transferring agents from one model to another will be triggered.",
-    PACKET_LOST_DANGER_VALUE = "This slider set such is the value of packet lost in models in which the mechanism for transferring agents from one model to another will be triggered.",
-    PING_DANGER_VALUE = "This slider set such is the value in ms of ping in models in which the mechanism for transferring agents from one model to another will be triggered.",
-    JITTER_DANGER_VALUE = "This slider set such is the value in ms of jitter in models in which the mechanism for transferring agents from one model to another will be triggered.",
+    MODELS_COUNT_VALUE = "Sets the number of models in the experiment",
+    MIN_SPAWN_AGENTS_VALUE = "Sets the minimum number of Agents arriving per tick",
+    MAX_SPAWN_AGENTS_VALUE = "Sets the maximum number of Agents arriving per tick",
+    WORK_INTERVAL_VALUE = "Sets the time interval between ticks",
+    STATISTIC_INTERVAL_VALUE = "Sets the time interval between statistics collection",
+    MODEL_SOURCE_ELEMENTS_COUNT_VALUE = "Sets the number of Agent Sources",
+    MIN_QUEUE_CAPACITY = "Sets the minimum Queue capacity",
+    MAX_QUEUE_CAPACITY = "Sets the maximum Queue capacity",
+    MIN_DELAY_CAPACITY = "Sets the minimum Server capacity",
+    MAX_DELAY_CAPACITY = "Sets the maximum Server capacity",
+    DELAY_VALUE = "Sets the time it takes for one Agent to be processed",
+    LOAD_FACTOR_DANGER_VALUE = "Sets the boundary value of the LoadFactor at which the load balancing decision will be made",
+    PACKET_LOST_DANGER_VALUE = "Sets the AgentsLoss boundary value at which a load balancing decision will be made",
+    PING_DANGER_VALUE = "Sets the Ping boundary value at which the load balancing decision will be made",
+    JITTER_DANGER_VALUE = "Sets the Jitter boundary value at which the load balancing decision will be made",
 }
 
 export const enum BoardSettingsConfigBlocksTitles {
     BOARD_SETTINGS = "Board settings",
-    QUALITY_OF_SERVICE_ACTIVE = "Quality of service",
+    QUALITY_OF_SERVICE_ACTIVE = "QOS settings",
 }
 
 export interface IRangeSettingData {
@@ -110,14 +110,14 @@ export interface IModelRatingInfo {
 export type TModelsRatings = IModelRatingInfo[];
 
 export const enum ModelRatingInfoList {
-    QUEUE = "This model queue efficiency rating relatively to maximum efficiency in this experiment.",
-    DELAY = "This model delay efficiency rating relatively to maximum efficiency in this experiment.",
-    GENERAL = "This model general efficiency rating relatively to maximum efficiency in this experiment.",
+    QUEUE = "Shows the ratio of Queue capacity to the maximum possible Queue capacity in this Model",
+    DELAY = "Shows the ratio of the Server capacity to the maximum possible Server capacity in this Model",
+    GENERAL = "Shows the overall estimate of the Model's capacity relative to the maximum possible capacity of the Model in the experiment",
 }
 
 export const enum ModelAdditionalInfoList {
-    AGENTS_CAME_IN_MODEL = "This number show, how many agents go to the model of all time of the experiment.",
-    AGENTS_LEFT_THROUGH_MODEL = "This number show, how many agents left the model after successfull service of all time of the experiment.",
-    AGENTS_IN_MODEL = "This number show, how agents service in model on the moment last taking statistic.",
-    AGENTS_LOST = "This number show, how many agents didn't serviced in the model of all time of the experiment.",
+    AGENTS_CAME_IN_MODEL = "Shows how many Agents entered the Model from all Sources for the entire work time of the Model",
+    AGENTS_LEFT_THROUGH_MODEL = "Shows how many Agents left the Model from all Sources for the entire work time of the Model",
+    AGENTS_IN_MODEL = "Shows how many Agents are in the Model for at the moment",
+    AGENTS_LOST = "Shows how many Agents could not be processed and were lost",
 }

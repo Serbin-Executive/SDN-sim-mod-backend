@@ -54,11 +54,11 @@ export const enum ServerMessageTypes {
 }
 
 export const enum ServerInfoMessageTexts {
-    CONNECT_MESSAGE = "YOU CONNECTED TO SERVER",
-    CREATE_MODELS = "MODELS CREATED",
-    START_MODELS = "MODELS STARTED",
-    STOP_MODELS = "MODELS STOPPED",
-    GET_SETUP_DATA = "YOU GET SETUP DATA",
+    CONNECT_MESSAGE = "A connection to the server has been established",
+    CREATE_MODELS = "The models are created on the board",
+    START_MODELS = "The models on the board are running",
+    STOP_MODELS = "The models on the board are stopped",
+    GET_SETUP_DATA = "Configuration data is received",
 }
 
 export interface IActionConfig {
