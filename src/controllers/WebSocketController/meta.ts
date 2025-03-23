@@ -14,6 +14,7 @@ export interface IBoardWorkCommandData {
     commandKey: string;
     isSendSettingsConfig: boolean;
     isCloseBoardControlPanel: boolean;
+    isAccessGetResults: boolean;
 }
 
 export type TBoardWorkCommandsConfig = IBoardWorkCommandData[];
@@ -23,16 +24,19 @@ export const boardWorkCommandsConfig: IBoardWorkCommandData[] = [
         commandKey: BoardWorkCommandsKeys.CREATE,
         isSendSettingsConfig: true,
         isCloseBoardControlPanel: false,
+        isAccessGetResults: false,
     },
     {
         commandKey: BoardWorkCommandsKeys.START,
         isSendSettingsConfig: false,
         isCloseBoardControlPanel: true,
+        isAccessGetResults: false,
     },
     {
         commandKey: BoardWorkCommandsKeys.STOP,
         isSendSettingsConfig: false,
         isCloseBoardControlPanel: false,
+        isAccessGetResults: true,
     },
 ]
 
