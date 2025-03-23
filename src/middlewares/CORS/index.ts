@@ -1,19 +1,5 @@
 // import { configDotenv } from "dotenv";
 import { Request, Response, NextFunction } from "express";
-import { EXPRESS_APP_ALLOWED_CORS_URL } from "../../utils/constants";
-// configDotenv();
-
-// const { EXPRESS_APP_ALLOWED_CORS_URL } = process.env;
-
-if (!EXPRESS_APP_ALLOWED_CORS_URL) {
-    throw new Error(
-        "Cannot start the application. EXPRESS_APP_ALLOWED_CORS_URL is not defined"
-    );
-}
-
-const allowedCorsUrl: string[] = [
-    EXPRESS_APP_ALLOWED_CORS_URL,
-];
 
 const ALLOWED_METHODS: string = "GET";
 
@@ -25,7 +11,7 @@ const CORS = (request: Request, response: Response, next: NextFunction) => {
 
     response.header("Access-Control-Allow-Credentials", "true");
 
-    if (origin && allowedCorsUrl.includes(origin)) {
+    if (origin) {
         response.header("Access-Control-Allow-Origin", origin);
     }
 
