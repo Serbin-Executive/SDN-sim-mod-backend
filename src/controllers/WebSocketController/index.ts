@@ -70,20 +70,20 @@ export const WebSocketController = (board: Board, startDate: Date) => {
     }
 
     const sendModelsRatings = (webSocketClient: WebSocket): void => {
-        const boardCapacitiesMessage: IServerMessage = {
+        const modelsRatingsMessage: IServerMessage = {
             messageType: ServerMessageTypes.BOARD_CAPACITIES_LIST,
             message: board.getModelsRatings(),
         }
 
-        webSocketClient.send(JSON.stringify(boardCapacitiesMessage));
+        webSocketClient.send(JSON.stringify(modelsRatingsMessage));
     }
 
     const ActionsConfigsList: Record<ClientCommandsTypes, IActionConfig> = {
         [ClientCommandsTypes.CREATE]: {
             updateBoardFunction: () => { board.updateSettingsConfig(sendableBoardSettingsConfig) },
             boardActionFunction: () => { board.create() },
-            clientSendActionFunctions: [sendModelsRatings, sendModelsActionsStates],
-            allClientsSendActionFunctions: [() => { sendMessageAllClients(ServerMessageTypes.MESSAGE, ServerInfoMessageTexts.CREATE_MODELS) }],
+            clientSendActionFunctions: [sendModelsActionsStates],
+            allClientsSendActionFunctions: [() => { sendMessageAllClients(ServerMessageTypes.MESSAGE, ServerInfoMessageTexts.CREATE_MODELS) },() => {sendMessageAllClients(ServerMessageTypes.BOARD_CAPACITIES_LIST, board.getModelsRatings())}],
         },
         [ClientCommandsTypes.START]: {
             updateBoardFunction: null,
@@ -120,6 +120,10 @@ export const WebSocketController = (board: Board, startDate: Date) => {
     const webSocketClientSetup = (webSocketClient: WebSocket, client: Client): void => {
         sendMessageCurrentClient(ServerMessageTypes.MESSAGE, ServerInfoMessageTexts.CONNECT_MESSAGE, webSocketClient);
 
+        if (board.getModelsList().length) {
+            sendModelsRatings(webSocketClient);
+        }
+
         if (clientsList.length) {
             clientsList.push(client);
 
@@ -130,10 +134,6 @@ export const WebSocketController = (board: Board, startDate: Date) => {
         client.setIsHost(true);
 
         clientsList.push(client);
-
-        if (board.getModelsList().length) {
-            sendModelsRatings(webSocketClient);
-        }
 
         sendMessageCurrentClient(ServerMessageTypes.BOARD_WORKING_COMMANDS, boardWorkCommandsConfig, webSocketClient);
         sendMessageCurrentClient(ServerMessageTypes.BOARD_SETTINGS_CONFIG_RANGES, boardSettingsConfigRanges, webSocketClient);
