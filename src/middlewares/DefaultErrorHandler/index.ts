@@ -1,7 +1,7 @@
 import { type Request, type Response, type NextFunction } from "express";
-import { CustomError } from "../../domains/CustomError";
+import { CustomError } from "../../Errors/CustomError";
 
-const defaultErrorHandler = (
+const DefaultErrorHandler = (
     error: CustomError,
     request: Request,
     response: Response,
@@ -18,4 +18,4 @@ const defaultErrorHandler = (
     next();
 };
 
-module.exports = defaultErrorHandler;
+export default DefaultErrorHandler;
